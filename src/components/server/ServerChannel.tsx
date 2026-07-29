@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { MemberRole, ChannelType } from "@/types";
@@ -94,9 +95,10 @@ export function ServerChannel({
     return () => clearInterval(timerInterval);
   }, [isVoiceConnected, status?.sessionStart]);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
     if (channel.type === ChannelType.AUDIO) {
       if (activeVoice?.id !== channel._id) {
+        e.preventDefault();
         // Connect in the background without switching pages
         connectVoice({
           id: channel._id,
@@ -106,16 +108,14 @@ export function ServerChannel({
         });
         return;
       }
-      // If already connected, a second click takes them to the full screen UI
-      router.push(`/servers/${serverId}/channels/${channel._id}`);
-    } else {
-      router.push(`/servers/${serverId}/channels/${channel._id}`);
     }
   };
 
   return (
     <div className="flex flex-col gap-0.5">
-    <button
+    <Link
+      href={`/servers/${serverId}/channels/${channel._id}`}
+      prefetch={true}
       onClick={handleClick}
       className={cn(
         "group flex w-full items-center gap-1.5 rounded-sm px-2 py-1.5 text-sm transition-colors",
@@ -144,6 +144,7 @@ export function ServerChannel({
               <div
                 role="button"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   onOpen("editChannel", { channel, server: { _id: serverId } });
                 }}
@@ -156,6 +157,7 @@ export function ServerChannel({
               <div
                 role="button"
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   onOpen("deleteChannel", { channel, server: { _id: serverId } });
                 }}
@@ -167,7 +169,7 @@ export function ServerChannel({
           </div>
         )}
       </div>
-    </button>
+    </Link>
       {channel.type !== ChannelType.TEXT && (isVoiceConnected || !!status?.sessionStart) && (
         <div className="flex flex-col gap-y-0.5 mt-0.5">
           {(isVoiceConnected && participants.length > 0 ? participants : (status?.participants || [])).map((participant: any) => (

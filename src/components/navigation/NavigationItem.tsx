@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ActionTooltip } from "@/components/action-tooltip";
 
@@ -13,14 +14,14 @@ interface NavigationItemProps {
 
 export function NavigationItem({ id, name, imageUrl }: NavigationItemProps) {
   const params = useParams();
-  const router = useRouter();
 
   const isActive = params?.serverId === id;
 
   return (
     <ActionTooltip label={name} side="right" align="center">
-      <button
-        onClick={() => router.push(`/servers/${id}`)}
+      <Link
+        href={`/servers/${id}`}
+        prefetch={true}
         className="group relative flex items-center"
       >
         {/* Active pill indicator */}
@@ -53,7 +54,7 @@ export function NavigationItem({ id, name, imageUrl }: NavigationItemProps) {
             </span>
           )}
         </div>
-      </button>
+      </Link>
     </ActionTooltip>
   );
 }

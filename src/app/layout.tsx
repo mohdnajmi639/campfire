@@ -21,6 +21,8 @@ export const metadata: Metadata = {
   keywords: ["chat", "voice", "community", "campfire", "real-time", "messaging"],
 };
 
+import NextTopLoader from "nextjs-toploader";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,6 +35,7 @@ export default function RootLayout({
     >
       <body className="min-h-full bg-discord-chat text-discord-text" suppressHydrationWarning>
         <Providers>
+          <NextTopLoader color="#E8622B" showSpinner={false} height={3} />
           <ModalProvider />
           {children}
         </Providers>
