@@ -1,0 +1,78 @@
+import { NextResponse } from "next/server";
+import { currentUser } from "@/lib/current-user";
+import dbConnect from "@/lib/db";
+import Server from "@/models/Server";
+import Member from "@/models/Member";
+import Channel from "@/models/Channel";
+import Message from "@/models/Message";
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ serverId: string }> }
+) {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { serverId } = await params;
+    const { name, imageUrl } = await req.json();
+
+    await dbConnect();
+
+    const server = await Server.findOneAndUpdate(
+      { _id: serverId, userId: user._id },
+      { name, imageUrl },
+      { new: true }
+    );
+
+    if (!server) {
+      return NextResponse.json({ error: "Server not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(server);
+  } catch (error) {
+    console.error("[SERVER_PATCH]", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ serverId: string }> }
+) {
+  try {
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { serverId } = await params;
+
+    await dbConnect();
+
+    const server = await Server.findOne({ _id: serverId, userId: user._id });
+    if (!server) {
+      return NextResponse.json({ error: "Server not found" }, { status: 404 });
+    }
+
+    // Delete all associated data
+    const channelIds = server.channels;
+    await Message.deleteMany({ channelId: { $in: channelIds } });
+    await Channel.deleteMany({ serverId });
+    await Member.deleteMany({ serverId });
+    await Server.findByIdAndDelete(serverId);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[SERVER_DELETE]", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

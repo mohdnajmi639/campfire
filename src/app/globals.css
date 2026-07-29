@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+/* ===== Discord-Inspired Dark Theme for Campfire ===== */
+
+@theme {
+  /* Brand Colors */
+  --color-campfire-orange: #E8622B;
+  --color-campfire-ember: #FF8C42;
+  --color-campfire-glow: #FFB067;
+
+  /* Discord-inspired palette */
+  --color-discord-dark: #1E1F22;
+  --color-discord-darker: #111214;
+  --color-discord-channel: #2B2D31;
+  --color-discord-chat: #313338;
+  --color-discord-hover: #35373C;
+  --color-discord-active: #404249;
+  --color-discord-input: #383A40;
+  --color-discord-text: #DBDEE1;
+  --color-discord-muted: #949BA4;
+  --color-discord-link: #00A8FC;
+  --color-discord-green: #23A55A;
+  --color-discord-red: #F23F43;
+  --color-discord-yellow: #F0B232;
+  --color-discord-blurple: #5865F2;
+
+  /* Semantic tokens */
+  --color-background: #313338;
+  --color-background-secondary: #2B2D31;
+  --color-background-tertiary: #1E1F22;
+  --color-background-floating: #111214;
+  --color-text-normal: #DBDEE1;
+  --color-text-muted: #949BA4;
+  --color-text-link: #00A8FC;
+  --color-interactive-normal: #B5BAC1;
+  --color-interactive-hover: #DBDEE1;
+  --color-interactive-active: #FFFFFF;
+  --color-brand: #E8622B;
+
+  /* Spacing */
+  --spacing-sidebar: 240px;
+  --spacing-nav: 72px;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+/* ===== Base Styles ===== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-normal);
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== Custom Scrollbar ===== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-background-tertiary);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-discord-active);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-background-tertiary) transparent;
+}
+
+/* ===== Animations ===== */
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(232, 98, 43, 0.4); }
+  50% { box-shadow: 0 0 12px 4px rgba(232, 98, 43, 0.15); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.2s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.2s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.15s ease-out;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ===== Utility Classes ===== */
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Chat message hover highlight */
+.chat-item-hover:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* Server icon pill indicator */
+.server-icon-pill {
+  transition: height var(--transition-normal), opacity var(--transition-normal);
+}

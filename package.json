@@ -1,0 +1,50 @@
+{
+  "name": "campfire",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@auth/mongodb-adapter": "^3.11.3",
+    "@emoji-mart/data": "^1.2.1",
+    "@emoji-mart/react": "^1.1.1",
+    "@livekit/components-react": "^2.9.23",
+    "@tanstack/react-query": "^5.101.4",
+    "@uploadthing/react": "^7.3.3",
+    "bcryptjs": "^3.0.3",
+    "date-fns": "^4.4.0",
+    "emoji-mart": "^5.6.0",
+    "livekit-client": "^2.21.0",
+    "livekit-server-sdk": "^2.17.0",
+    "lucide-react": "^1.27.0",
+    "mongodb": "^7.5.0",
+    "mongoose": "^9.8.1",
+    "next": "16.2.12",
+    "next-auth": "^5.0.0-beta.32",
+    "pusher": "^5.3.4",
+    "pusher-js": "^8.6.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "uploadthing": "^7.7.4",
+    "uuid": "^14.0.1",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/uuid": "^11.0.0",
+    "clsx": "^2.1.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
