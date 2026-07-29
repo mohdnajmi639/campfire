@@ -173,3 +173,13 @@ body {
 .server-icon-pill {
   transition: height var(--transition-normal), opacity var(--transition-normal);
 }
+
+/* Hide LiveKit Default Placeholder SVG globally */
+.lk-participant-placeholder svg {
+  display: none !important;
+}
+.lk-participant-placeholder {
+  background: transparent !important;
+}
+
+/* End of Base Styles */

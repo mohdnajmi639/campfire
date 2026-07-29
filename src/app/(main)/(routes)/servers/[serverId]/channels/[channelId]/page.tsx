@@ -7,7 +7,7 @@ import Member from "@/models/Member";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessages } from "@/components/chat/ChatMessages";
-import { MediaRoom } from "@/components/media-room";
+import { VoiceChannelTrigger } from "@/components/voice-channel-trigger";
 
 export default async function ChannelPage({
   params,
@@ -62,18 +62,24 @@ export default async function ChannelPage({
       )}
 
       {channel.type === ChannelType.AUDIO && (
-        <MediaRoom
-          chatId={channelId}
-          audio={true}
-          video={false}
+        <VoiceChannelTrigger
+          channel={{
+            id: channelId,
+            name: channel.name,
+            serverId,
+            video: false,
+          }}
         />
       )}
 
       {channel.type === ChannelType.VIDEO && (
-        <MediaRoom
-          chatId={channelId}
-          audio={true}
-          video={true}
+        <VoiceChannelTrigger
+          channel={{
+            id: channelId,
+            name: channel.name,
+            serverId,
+            video: true,
+          }}
         />
       )}
     </div>

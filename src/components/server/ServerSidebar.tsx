@@ -11,6 +11,8 @@ import { Hash, Mic, Video } from "lucide-react";
 import { ServerSection } from "./ServerSection";
 import { ServerChannel } from "./ServerChannel";
 import { ServerMember } from "./ServerMember";
+import { VoiceConnectedBar } from "./VoiceConnectedBar";
+import { UserPanel } from "@/components/user-panel";
 
 interface ServerSidebarProps {
   serverId: string;
@@ -29,7 +31,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
   await dbConnect();
 
   const server = await Server.findById(serverId)
-    .populate("channels")
+    .populate({ path: "channels", model: Channel })
     .populate({
       path: "members",
       populate: { path: "userId", model: User },
@@ -88,7 +90,6 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
-                Icon={iconMap[channel.type as ChannelType]}
               />
             ))}
           </ServerSection>
@@ -112,7 +113,6 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
-                Icon={iconMap[channel.type as ChannelType]}
               />
             ))}
           </ServerSection>
@@ -136,7 +136,6 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
-                Icon={iconMap[channel.type as ChannelType]}
               />
             ))}
           </ServerSection>
@@ -163,6 +162,8 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
           </ServerSection>
         )}
       </div>
+      <VoiceConnectedBar />
+      <UserPanel user={{ name: user.name, image: user.image }} />
     </div>
   );
 }

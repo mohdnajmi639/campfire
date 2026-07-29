@@ -49,7 +49,7 @@ export default function SignInPage() {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-campfire-orange to-campfire-ember shadow-lg">
           <Flame className="h-8 w-8 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-white">Welcome back!</h1>
+        <h1 className="text-2xl font-bold text-white">Welcome to Campfire!</h1>
         <p className="mt-1 text-discord-muted">
           We&apos;re so excited to see you again!
         </p>
@@ -112,15 +112,17 @@ export default function SignInPage() {
       {/* OAuth */}
       <div className="space-y-3">
         <button
-          onClick={() => handleOAuth("github")}
-          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors hover:bg-discord-active"
+          disabled
+          title="Temporarily unavailable"
+          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors opacity-50 cursor-not-allowed"
         >
           <LogIn className="h-5 w-5" />
           Continue with GitHub
         </button>
         <button
-          onClick={() => handleOAuth("google")}
-          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors hover:bg-discord-active"
+          disabled
+          title="Temporarily unavailable"
+          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors opacity-50 cursor-not-allowed"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -141,6 +143,11 @@ export default function SignInPage() {
         >
           Register
         </Link>
+      </p>
+
+      <div className="mt-6 h-px w-full bg-discord-active" />
+      <p className="mt-4 text-center text-xs text-discord-muted/60">
+        Powered by ClockDev 2026.
       </p>
     </div>
   );

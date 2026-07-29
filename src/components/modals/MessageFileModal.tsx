@@ -42,30 +42,44 @@ export function MessageFileModal() {
   if (!isModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in">
-      <div className="w-full max-w-md rounded-lg bg-discord-channel p-6 shadow-2xl animate-scale-in">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-white">Add an attachment</h2>
-          <button onClick={onClose} className="text-discord-muted hover:text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 animate-fade-in px-4">
+      <div className="w-full max-w-md rounded-lg bg-discord-chat shadow-2xl animate-scale-in overflow-hidden flex flex-col">
+        <div className="p-6 pb-4 relative">
+          <button 
+            onClick={onClose} 
+            className="absolute top-4 right-4 text-discord-muted hover:text-white transition-colors"
+          >
             <X className="h-5 w-5" />
           </button>
+          
+          <h2 className="text-xl font-bold text-white mb-2">Add an attachment</h2>
+          <p className="text-sm text-discord-muted">
+            Send a file, image, or document as a message in this channel.
+          </p>
         </div>
 
-        <p className="mb-4 text-sm text-discord-muted">Send a file as a message</p>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex justify-center">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="px-6 pb-6 flex justify-center">
             <FileUpload endpoint="messageFile" value={fileUrl} onChange={(url) => setFileUrl(url || "")} />
           </div>
 
-          <button
-            type="submit"
-            disabled={isLoading || !fileUrl}
-            className="flex w-full items-center justify-center gap-2 rounded-sm bg-campfire-orange py-2.5 text-sm font-medium text-white transition-colors hover:bg-campfire-ember disabled:opacity-50"
-          >
-            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Send
-          </button>
+          <div className="bg-discord-channel px-6 py-4 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-sm font-medium text-white hover:underline px-4 py-2"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !fileUrl}
+              className="flex items-center justify-center gap-2 rounded bg-discord-blurple px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-discord-blurple/80 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Send
+            </button>
+          </div>
         </form>
       </div>
     </div>

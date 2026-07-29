@@ -1,5 +1,7 @@
 import { NavigationSidebar } from "@/components/navigation/NavigationSidebar";
 
+import { GlobalVoiceProvider } from "@/components/providers/GlobalVoiceProvider";
+
 export default function MainLayout({
   children,
 }: {
@@ -13,7 +15,10 @@ export default function MainLayout({
       </div>
 
       {/* Content */}
-      <main className="flex-1 h-full">{children}</main>
+      <main className="flex-1 h-full relative">
+        {children}
+        <GlobalVoiceProvider />
+      </main>
     </div>
   );
 }

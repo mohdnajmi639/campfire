@@ -12,15 +12,17 @@ export type ModalType =
   | "editChannel"
   | "deleteChannel"
   | "messageFile"
-  | "deleteMessage";
+  | "deleteMessage"
+  | "userSettings";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 interface ModalData {
   server?: any;
   channel?: any;
   channelType?: ChannelType;
   apiUrl?: string;
   query?: Record<string, string>;
+  user?: any;
 }
 
 interface ModalStore {

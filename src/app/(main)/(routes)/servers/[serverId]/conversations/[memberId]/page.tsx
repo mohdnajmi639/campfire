@@ -51,30 +51,5 @@ export default async function ConversationPage({
   const otherUser = (otherMember as any).userId;
   const conversationId = conversation._id.toString();
 
-  return (
-    <div className="flex h-full flex-col bg-discord-chat">
-      <ChatHeader
-        name={otherUser.name}
-        type="conversation"
-        imageUrl={otherUser.image}
-      />
-      <ChatMessages
-        name={otherUser.name}
-        chatId={conversationId}
-        apiUrl="/api/direct-messages"
-        paramKey="conversationId"
-        paramValue={conversationId}
-        type="conversation"
-        currentMemberId={currentMember._id.toString()}
-        currentMemberRole={currentMember.role}
-        serverId={serverId}
-      />
-      <ChatInput
-        apiUrl="/api/direct-messages"
-        query={{ conversationId, serverId }}
-        name={otherUser.name}
-        type="conversation"
-      />
-    </div>
-  );
+  return redirect(`/me/${conversationId}`);
 }

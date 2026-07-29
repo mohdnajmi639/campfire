@@ -7,6 +7,7 @@ import { NavigationItem } from "./NavigationItem";
 import { NavigationAction } from "./NavigationAction";
 import { UserButton } from "./UserButton";
 import { Flame } from "lucide-react";
+import Link from "next/link";
 
 export async function NavigationSidebar() {
   const user = await currentUser();
@@ -22,11 +23,12 @@ export async function NavigationSidebar() {
   return (
     <div className="flex h-full w-[72px] flex-col items-center gap-y-2 bg-discord-darker py-3">
       {/* Home / Logo */}
-      <div className="group mb-1 flex">
+      {/* Home / Logo */}
+      <Link href="/me" className="group mb-1 flex">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-discord-channel transition-all duration-200 group-hover:rounded-xl group-hover:bg-campfire-orange cursor-pointer">
           <Flame className="h-6 w-6 text-campfire-orange transition-colors group-hover:text-white" />
         </div>
-      </div>
+      </Link>
 
       {/* Separator */}
       <div className="mx-auto h-[2px] w-8 rounded-full bg-discord-channel" />

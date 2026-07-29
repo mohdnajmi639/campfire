@@ -83,7 +83,7 @@ export function ChatMessages({
 
       <div className="mt-auto flex flex-col-reverse">
         {data?.pages?.map((page: any, i: number) => (
-          <div key={i}>
+          <div key={i} className="flex flex-col-reverse">
             {page.items.map((message: any) => (
               <ChatItem
                 key={message._id}

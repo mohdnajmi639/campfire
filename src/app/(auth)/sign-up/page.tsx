@@ -166,15 +166,17 @@ export default function SignUpPage() {
       {/* OAuth */}
       <div className="space-y-3">
         <button
-          onClick={() => handleOAuth("github")}
-          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors hover:bg-discord-active"
+          disabled
+          title="Temporarily unavailable"
+          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors opacity-50 cursor-not-allowed"
         >
           <LogIn className="h-5 w-5" />
           Continue with GitHub
         </button>
         <button
-          onClick={() => handleOAuth("google")}
-          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors hover:bg-discord-active"
+          disabled
+          title="Temporarily unavailable"
+          className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors opacity-50 cursor-not-allowed"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -195,6 +197,11 @@ export default function SignUpPage() {
         >
           Log in
         </Link>
+      </p>
+
+      <div className="mt-6 h-px w-full bg-discord-active" />
+      <p className="mt-4 text-center text-xs text-discord-muted/60">
+        Powered by ClockDev 2026.
       </p>
     </div>
   );
