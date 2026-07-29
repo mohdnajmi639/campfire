@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
-import Member, { MemberRole } from "@/models/Member";
+import Member from "@/models/Member";
+import { MemberRole } from "@/types";
 
 export async function PATCH(
   req: Request,

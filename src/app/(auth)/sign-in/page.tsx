@@ -4,7 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Flame, Github, Loader2 } from "lucide-react";
+import { Flame, LogIn, Loader2 } from "lucide-react";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -115,7 +115,7 @@ export default function SignInPage() {
           onClick={() => handleOAuth("github")}
           className="flex w-full items-center justify-center gap-2 rounded-sm bg-discord-darker py-2.5 text-sm font-medium text-discord-text transition-colors hover:bg-discord-active"
         >
-          <Github className="h-5 w-5" />
+          <LogIn className="h-5 w-5" />
           Continue with GitHub
         </button>
         <button

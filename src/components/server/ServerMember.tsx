@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { MemberRole } from "@/models/Member";
+import { MemberRole } from "@/types";
 import { UserAvatar } from "@/components/user-avatar";
 import { Shield, ShieldCheck, ShieldAlert } from "lucide-react";
 
@@ -56,3 +56,4 @@ export function ServerMember({ member, serverId }: ServerMemberProps) {
     </button>
   );
 }
+

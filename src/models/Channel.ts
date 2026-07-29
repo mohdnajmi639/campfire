@@ -1,10 +1,6 @@
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-export enum ChannelType {
-  TEXT = "TEXT",
-  AUDIO = "AUDIO",
-  VIDEO = "VIDEO",
-}
+import { ChannelType } from "@/types";
 
 export interface IChannel extends Document {
   _id: Types.ObjectId;

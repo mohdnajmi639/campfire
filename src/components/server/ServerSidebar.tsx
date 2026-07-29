@@ -2,7 +2,8 @@ import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
 import Server from "@/models/Server";
 import Member from "@/models/Member";
-import Channel, { ChannelType } from "@/models/Channel";
+import Channel from "@/models/Channel";
+import { ChannelType } from "@/types";
 import User from "@/models/User";
 import { redirect } from "next/navigation";
 import { ServerHeader } from "./ServerHeader";
@@ -165,3 +166,4 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
     </div>
   );
 }
+

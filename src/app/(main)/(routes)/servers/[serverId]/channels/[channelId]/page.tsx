@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
-import Channel, { ChannelType } from "@/models/Channel";
+import Channel from "@/models/Channel";
+import { ChannelType } from "@/types";
 import Member from "@/models/Member";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";

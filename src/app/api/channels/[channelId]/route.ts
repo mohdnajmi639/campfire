@@ -3,7 +3,8 @@ import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
 import Server from "@/models/Server";
 import Channel from "@/models/Channel";
-import Member, { MemberRole } from "@/models/Member";
+import Member from "@/models/Member";
+import { MemberRole } from "@/types";
 import Message from "@/models/Message";
 
 export async function PATCH(

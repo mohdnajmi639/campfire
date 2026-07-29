@@ -7,7 +7,7 @@ import { Edit, FileIcon, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
-import { MemberRole } from "@/models/Member";
+import { MemberRole } from "@/types";
 
 interface ChatItemProps {
   id: string;
@@ -238,3 +238,4 @@ export function ChatItem({
     </div>
   );
 }
+

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
-import { ChannelType } from "@/models/Channel";
+import { ChannelType } from "@/types";
 import { Hash, Loader2, Mic, Video, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -132,3 +132,4 @@ export function CreateChannelModal() {
     </div>
   );
 }
+

@@ -3,8 +3,10 @@ import { v4 as uuidv4 } from "uuid";
 import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
 import Server from "@/models/Server";
-import Member, { MemberRole } from "@/models/Member";
-import Channel, { ChannelType } from "@/models/Channel";
+import Member from "@/models/Member";
+import { MemberRole } from "@/types";
+import Channel from "@/models/Channel";
+import { ChannelType } from "@/types";
 
 export async function POST(req: Request) {
   try {
@@ -58,3 +60,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

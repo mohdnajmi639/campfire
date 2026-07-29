@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
 import Server from "@/models/Server";
 import Member from "@/models/Member";
+import { MemberRole } from "@/types";
 
 export default async function InvitePage({
   params,
@@ -34,7 +35,7 @@ export default async function InvitePage({
   const member = await Member.create({
     userId: user._id,
     serverId: server._id,
-    role: "GUEST",
+    role: MemberRole.GUEST,
   });
 
   server.members.push(member._id);

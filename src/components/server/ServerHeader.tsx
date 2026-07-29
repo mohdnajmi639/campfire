@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MemberRole } from "@/models/Member";
+import { MemberRole } from "@/types";
 import { useModal } from "@/hooks/use-modal-store";
 import {
   ChevronDown,
@@ -136,3 +136,4 @@ export function ServerHeader({ server, role }: ServerHeaderProps) {
     </div>
   );
 }
+

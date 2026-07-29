@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
 import { UserAvatar } from "@/components/user-avatar";
-import { MemberRole } from "@/models/Member";
+import { MemberRole } from "@/types";
 import {
   Loader2,
   MoreVertical,
@@ -173,3 +173,4 @@ export function MembersModal() {
     </div>
   );
 }
+

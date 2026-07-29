@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { MemberRole } from "@/models/Member";
+import { MemberRole } from "@/types";
 import { useModal } from "@/hooks/use-modal-store";
 import { Edit, Lock, Trash, type LucideIcon } from "lucide-react";
 import { ActionTooltip } from "@/components/action-tooltip";
@@ -84,3 +84,4 @@ export function ServerChannel({
     </button>
   );
 }
+

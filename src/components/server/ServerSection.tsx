@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MemberRole } from "@/models/Member";
-import { ChannelType } from "@/models/Channel";
+import { MemberRole } from "@/types";
+import { ChannelType } from "@/types";
 import { useModal } from "@/hooks/use-modal-store";
 import { ChevronDown, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -61,3 +61,4 @@ export function ServerSection({
     </div>
   );
 }
+

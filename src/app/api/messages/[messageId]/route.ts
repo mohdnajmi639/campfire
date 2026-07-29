@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
 import Message from "@/models/Message";
-import Member, { MemberRole } from "@/models/Member";
+import Member from "@/models/Member";
+import { MemberRole } from "@/types";
 import User from "@/models/User";
 import { pusherServer } from "@/lib/pusher";
 

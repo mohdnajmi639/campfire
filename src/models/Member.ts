@@ -1,10 +1,6 @@
 import mongoose, { Schema, Document, Model, Types } from "mongoose";
 
-export enum MemberRole {
-  ADMIN = "ADMIN",
-  MODERATOR = "MODERATOR",
-  GUEST = "GUEST",
-}
+import { MemberRole } from "@/types";
 
 export interface IMember extends Document {
   _id: Types.ObjectId;

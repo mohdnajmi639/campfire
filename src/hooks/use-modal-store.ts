@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { ChannelType } from "@/models/Channel";
+import { ChannelType } from "@/types";
 
 export type ModalType =
   | "createServer"
@@ -38,3 +38,4 @@ export const useModal = create<ModalStore>((set) => ({
   onOpen: (type, data = {}) => set({ isOpen: true, type, data }),
   onClose: () => set({ type: null, isOpen: false }),
 }));
+
