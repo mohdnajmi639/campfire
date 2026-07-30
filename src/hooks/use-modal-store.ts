@@ -14,7 +14,8 @@ export type ModalType =
   | "messageFile"
   | "deleteMessage"
   | "userSettings"
-  | "changeNickname";
+  | "changeNickname"
+  | "imageViewer";
 
  
 interface ModalData {
@@ -25,6 +26,7 @@ interface ModalData {
   query?: Record<string, string>;
   user?: any;
   member?: any;
+  imageUrl?: string;
 }
 
 interface ModalStore {

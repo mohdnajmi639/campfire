@@ -7,6 +7,7 @@ import { MemberRole } from "@/types";
 import { UserAvatar } from "@/components/user-avatar";
 import { Shield, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useModal } from "@/hooks/use-modal-store";
+import { ActionTooltip } from "@/components/action-tooltip";
 
 interface ServerMemberProps {
   member: {
@@ -62,7 +63,11 @@ export function ServerMember({ member, serverId, isCurrentUser }: ServerMemberPr
   return (
     <>
       <button
-        onClick={() => router.push(`/servers/${serverId}/conversations/${member._id}`)}
+        onClick={() => {
+          if (!isCurrentUser) {
+            router.push(`/servers/${serverId}/conversations/${member._id}`);
+          }
+        }}
         onContextMenu={handleContextMenu}
         className={cn(
           "group flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors",
@@ -77,7 +82,11 @@ export function ServerMember({ member, serverId, isCurrentUser }: ServerMemberPr
           className="h-7 w-7"
         />
         <span className="truncate">{member.nickname || member.user.name}</span>
-        {icon && <span className="ml-auto">{icon}</span>}
+        {icon && (
+          <ActionTooltip label={member.role} side="top">
+            <span className="ml-auto flex items-center justify-center">{icon}</span>
+          </ActionTooltip>
+        )}
       </button>
 
       {contextMenu && (

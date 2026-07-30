@@ -87,6 +87,7 @@ export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
       <VoiceTracker />
       <VoiceParticipantTracker />
       <MediaStateSync />
+      <VolumeSync />
     </LiveKitRoom>
   );
 }
@@ -152,10 +153,28 @@ function CustomVideoConference() {
           </GridLayout>
         )}
       </div>
-      <ControlBar />
+      <ControlBar controls={{ camera: true, microphone: true, screenShare: true, leave: true }} />
       <RoomAudioRenderer />
     </div>
   );
+}
+
+function VolumeSync() {
+  const participants = useParticipants();
+  const userVolumes = useVoiceStore((s) => s.userVolumes);
+
+  useEffect(() => {
+    participants.forEach((p) => {
+      const vol = userVolumes[p.identity] ?? 1;
+      p.audioTrackPublications.forEach((pub: any) => {
+        if (pub.track && typeof pub.track.setVolume === 'function') {
+          pub.track.setVolume(vol);
+        }
+      });
+    });
+  }, [participants, userVolumes]);
+  
+  return null;
 }
 
 function CustomParticipantTile(props: any) {
@@ -163,8 +182,10 @@ function CustomParticipantTile(props: any) {
   const trackRef = props.trackRef || contextTrackRef;
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
-  const [volume, setVolume] = useState(1);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const userVolumes = useVoiceStore((s) => s.userVolumes);
+  const setUserVolume = useVoiceStore((s) => s.setUserVolume);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -180,6 +201,7 @@ function CustomParticipantTile(props: any) {
 
   const participant = trackRef.participant;
   const isSpeaking = participant?.isSpeaking;
+  const volume = userVolumes[participant.identity] ?? 1;
   
   // A camera is considered OFF if it's a camera track AND it has no publication (placeholder) OR it is explicitly muted.
   const isCameraOff = trackRef.source === Track.Source.Camera && (!trackRef.publication || trackRef.publication.isMuted);
@@ -199,49 +221,42 @@ function CustomParticipantTile(props: any) {
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseFloat(e.target.value);
-    setVolume(val);
-    
-    // Find audio track and adjust volume
-    participant.audioTrackPublications.forEach((pub: any) => {
-      if (pub.track && typeof pub.track.setVolume === 'function') {
-        pub.track.setVolume(val);
-      }
-    });
+    setUserVolume(participant.identity, val);
   };
 
   return (
-    <div onContextMenu={handleContextMenu} className="relative w-full h-full">
-      <ParticipantTile {...props} trackRef={trackRef} className={cn(props.className, "bg-[#111214]")}>
-        {isCameraOff && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-            <div
-              className={cn(
-                "relative h-24 w-24 rounded-full flex items-center justify-center bg-discord-active text-discord-text text-3xl font-semibold overflow-hidden transition-all duration-200 pointer-events-auto",
-                isSpeaking
-                  ? "ring-4 ring-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
-                  : "ring-4 ring-discord-chat shadow-none"
-              )}
-            >
-              {imageUrl ? (
-                <Image
-                  fill
-                  src={imageUrl}
-                  alt={participant.name || participant.identity}
-                  className="object-cover"
-                />
-              ) : (
-                <span>{(participant.name || participant.identity || "?")[0].toUpperCase()}</span>
-              )}
-            </div>
+    <div onContextMenu={handleContextMenu} className="relative w-full h-full bg-[#111214] rounded-lg overflow-hidden group">
+      <ParticipantTile {...props} trackRef={trackRef} className="w-full h-full absolute inset-0" />
+      
+      {isCameraOff && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111214] pointer-events-none">
+          <div
+            className={cn(
+              "relative h-24 w-24 rounded-full flex items-center justify-center bg-discord-active text-discord-text text-3xl font-semibold overflow-hidden transition-all duration-200 pointer-events-auto",
+              isSpeaking
+                ? "ring-4 ring-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                : "ring-4 ring-discord-chat shadow-none"
+            )}
+          >
+            {imageUrl ? (
+              <Image
+                fill
+                src={imageUrl}
+                alt={participant.name || participant.identity}
+                className="object-cover"
+              />
+            ) : (
+              <span>{(participant.name || participant.identity || "?")[0].toUpperCase()}</span>
+            )}
           </div>
-        )}
-      </ParticipantTile>
+        </div>
+      )}
 
       {contextMenu && (
         <div
           ref={menuRef}
           style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="fixed z-50 min-w-[200px] rounded-md bg-[#111214] p-3 text-sm text-discord-text shadow-lg ring-1 ring-black/50"
+          className="fixed z-50 min-w-[200px] rounded-md bg-[#111214] p-3 text-sm text-discord-text shadow-lg ring-1 ring-black/50 pointer-events-auto"
         >
           <div className="mb-2 font-semibold text-white">Local Volume</div>
           <div className="flex items-center gap-2">

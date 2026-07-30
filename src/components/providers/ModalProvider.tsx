@@ -12,6 +12,7 @@ import { MembersModal } from "@/components/modals/MembersModal";
 import { MessageFileModal } from "@/components/modals/MessageFileModal";
 import { UserSettingsModal } from "@/components/modals/UserSettingsModal";
 import { ChangeNicknameModal } from "@/components/modals/ChangeNicknameModal";
+import { ImageViewerModal } from "@/components/modals/ImageViewerModal";
 
 export function ModalProvider() {
   const [isMounted, setIsMounted] = useState(false);
@@ -36,6 +37,7 @@ export function ModalProvider() {
       <MessageFileModal />
       <UserSettingsModal />
       <ChangeNicknameModal />
+      <ImageViewerModal />
     </>
   );
 }

@@ -6,8 +6,9 @@ import Conversation from "@/models/Conversation";
 import User from "@/models/User";
 import Friendship from "@/models/Friendship";
 import { DMItem } from "./DMItem";
-import { Search } from "lucide-react";
+import { Search, UserRound } from "lucide-react";
 import { UserPanel } from "@/components/user-panel";
+import Link from "next/link";
 
 export async function DMSidebar() {
   const user = await currentUser();
@@ -56,9 +57,18 @@ export async function DMSidebar() {
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-3 no-scrollbar">
-        <div className="mb-2 px-2 text-xs font-semibold uppercase text-discord-muted">
-          Direct Messages
+      <div className="flex-1 overflow-y-auto px-2 py-2 no-scrollbar">
+        <Link
+          href="/me"
+          className="group flex w-full items-center gap-x-4 rounded-sm px-3 py-2 text-discord-muted hover:bg-discord-hover hover:text-discord-text transition-colors mb-2"
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-[24px] bg-discord-darker group-hover:bg-discord-darker group-hover:text-white transition-all">
+            <UserRound className="h-5 w-5" />
+          </div>
+          <span className="text-base font-semibold">Friends</span>
+        </Link>
+        <div className="mb-1 px-2 pt-2 text-xs font-semibold uppercase text-discord-muted flex justify-between items-center group-hover:text-discord-text">
+          <span>Direct Messages</span>
         </div>
         {conversations.map((conv: any) => {
           // Identify the OTHER member in the conversation

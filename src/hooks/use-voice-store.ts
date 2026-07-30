@@ -15,36 +15,47 @@ export interface VoiceParticipant {
   joinedAt?: number;
 }
 
-interface VoiceStore {
-  isSpeaking: boolean;
-  setSpeaking: (speaking: boolean) => void;
-  activeVoice: ActiveVoiceChannel | null;
-  connectVoice: (channel: ActiveVoiceChannel) => void;
-  disconnectVoice: () => void;
-  participants: VoiceParticipant[];
-  setParticipants: (participants: VoiceParticipant[]) => void;
+export interface VoiceState {
   isMicMuted: boolean;
   isCameraOn: boolean;
   isScreenSharing: boolean;
-  setMediaState: (state: Partial<{ isMicMuted: boolean; isCameraOn: boolean; isScreenSharing: boolean }>) => void;
+}
+
+interface VoiceStore extends VoiceState {
+  activeVoice: ActiveVoiceChannel | null;
+  isSpeaking: boolean;
+  participants: VoiceParticipant[];
   mediaAction: { type: "mic" | "camera" | "screen"; value: boolean } | null;
-  triggerMediaAction: (type: "mic" | "camera" | "screen", value: boolean) => void;
+  userVolumes: Record<string, number>;
+
+  connectVoice: (channel: ActiveVoiceChannel) => void;
+  disconnectVoice: () => void;
+  setSpeaking: (speaking: boolean) => void;
+  setParticipants: (participants: VoiceParticipant[]) => void;
+  setMediaState: (state: Partial<VoiceState>) => void;
+  triggerMediaAction: (action: "mic" | "camera" | "screen", value: boolean) => void;
   clearMediaAction: () => void;
+  setUserVolume: (identity: string, volume: number) => void;
 }
 
 export const useVoiceStore = create<VoiceStore>((set) => ({
-  isSpeaking: false,
-  setSpeaking: (speaking) => set({ isSpeaking: speaking }),
   activeVoice: null,
-  connectVoice: (channel) => set({ activeVoice: channel }),
-  disconnectVoice: () => set({ activeVoice: null, isSpeaking: false, participants: [], mediaAction: null }),
+  isSpeaking: false,
   participants: [],
-  setParticipants: (participants) => set({ participants }),
   isMicMuted: false,
   isCameraOn: false,
   isScreenSharing: false,
-  setMediaState: (state) => set(state),
   mediaAction: null,
+  userVolumes: {},
+
+  connectVoice: (channel) => set({ activeVoice: channel }),
+  disconnectVoice: () => set({ activeVoice: null, participants: [], isSpeaking: false, userVolumes: {} }),
+  setSpeaking: (speaking) => set({ isSpeaking: speaking }),
+  setParticipants: (participants) => set({ participants }),
+  setMediaState: (state) => set((prev) => ({ ...prev, ...state })),
   triggerMediaAction: (type, value) => set({ mediaAction: { type, value } }),
   clearMediaAction: () => set({ mediaAction: null }),
+  setUserVolume: (identity, volume) => set((prev) => ({
+    userVolumes: { ...prev.userVolumes, [identity]: volume }
+  })),
 }));

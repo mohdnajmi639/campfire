@@ -21,6 +21,10 @@ interface ServerChannelProps {
   };
   serverId: string;
   role?: string;
+  currentMember?: {
+    _id: string;
+    user: { name: string };
+  };
 }
 
 const iconMap = {
@@ -33,6 +37,7 @@ export function ServerChannel({
   channel,
   serverId,
   role,
+  currentMember,
 }: ServerChannelProps) {
   const params = useParams();
   const router = useRouter();
@@ -96,17 +101,14 @@ export function ServerChannel({
   }, [isVoiceConnected, status?.sessionStart]);
 
   const handleClick = (e: React.MouseEvent) => {
-    if (channel.type === ChannelType.AUDIO) {
+    if (channel.type === ChannelType.AUDIO || channel.type === ChannelType.VIDEO) {
       if (activeVoice?.id !== channel._id) {
-        e.preventDefault();
-        // Connect in the background without switching pages
         connectVoice({
           id: channel._id,
           name: channel.name,
           serverId: serverId,
-          video: false,
+          video: channel.type === ChannelType.VIDEO,
         });
-        return;
       }
     }
   };
@@ -125,9 +127,13 @@ export function ServerChannel({
       )}
     >
       {isGeneral ? (
-        <Lock className="h-4 w-4 shrink-0 text-discord-muted" />
+        <ActionTooltip label="General Channel" side="top">
+          <Lock className="h-4 w-4 shrink-0 text-discord-muted outline-none" />
+        </ActionTooltip>
       ) : (
-        <Icon className="h-4 w-4 shrink-0" />
+        <ActionTooltip label={channel.type === "TEXT" ? "Text Channel" : channel.type === "AUDIO" ? "Voice Channel" : "Video Channel"} side="top">
+          <Icon className="h-4 w-4 shrink-0 outline-none" />
+        </ActionTooltip>
       )}
       <span className="truncate">{channel.name}</span>
 
@@ -171,27 +177,102 @@ export function ServerChannel({
       </div>
     </Link>
       {channel.type !== ChannelType.TEXT && (isVoiceConnected || !!status?.sessionStart) && (
-        <div className="flex flex-col gap-y-0.5 mt-0.5">
+        <div className="flex flex-col gap-y-0.5 mt-0.5 relative">
           {(isVoiceConnected && participants.length > 0 ? participants : (status?.participants || [])).map((participant: any) => (
-            <div
+            <ParticipantItem
               key={participant.identity}
-              className="flex items-center gap-x-2 pl-8 pr-2 py-1 transition-colors hover:bg-discord-hover/50 rounded-sm"
-            >
-              <UserAvatar
-                src={participant.avatarUrl || ""}
-                name={participant.name}
-                className={cn(
-                  "h-6 w-6 transition-all duration-75",
-                  participant.isSpeaking && "ring-2 ring-discord-blue"
-                )}
-              />
-              <div className="flex flex-col leading-tight overflow-hidden">
-                <span className="text-xs font-semibold text-discord-text truncate">
-                  {participant.name}
-                </span>
-              </div>
-            </div>
+              participant={participant}
+              serverId={serverId}
+              currentMember={currentMember}
+            />
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ParticipantItem({ participant, serverId, currentMember }: { participant: any, serverId: string, currentMember: any }) {
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const userVolumes = useVoiceStore((s) => s.userVolumes);
+  const setUserVolume = useVoiceStore((s) => s.setUserVolume);
+  const { onOpen } = useModal();
+
+  const volume = userVolumes[participant.identity] ?? 1;
+  const isCurrentUser = currentMember && participant.identity === currentMember.user.name;
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenu(null);
+      }
+    };
+    if (contextMenu) document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [contextMenu]);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setUserVolume(participant.identity, val);
+  };
+
+  return (
+    <div onContextMenu={handleContextMenu}>
+      <div className="flex items-center gap-x-2 pl-8 pr-2 py-1 transition-colors hover:bg-discord-hover/50 rounded-sm cursor-pointer">
+        <UserAvatar
+          src={participant.avatarUrl || ""}
+          name={participant.name}
+          className={cn(
+            "h-6 w-6 transition-all duration-75",
+            participant.isSpeaking && "ring-2 ring-discord-blue"
+          )}
+        />
+        <div className="flex flex-col leading-tight overflow-hidden">
+          <span className="text-xs font-semibold text-discord-text truncate">
+            {participant.name}
+          </span>
+        </div>
+      </div>
+
+      {contextMenu && (
+        <div
+          ref={menuRef}
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          className="fixed z-50 min-w-[200px] rounded-md bg-[#111214] p-3 text-sm text-discord-text shadow-lg ring-1 ring-black/50 pointer-events-auto"
+        >
+          {isCurrentUser ? (
+            <button
+              onClick={() => {
+                setContextMenu(null);
+                onOpen("changeNickname", { member: currentMember, server: { _id: serverId } });
+              }}
+              className="w-full rounded-sm px-2 py-1.5 text-left hover:bg-discord-blurple hover:text-white"
+            >
+              Change Nickname
+            </button>
+          ) : (
+            <>
+              <div className="mb-2 font-semibold text-white">Local Volume</div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="w-full accent-campfire-blue"
+                />
+                <span className="text-xs w-8 text-right">{Math.round(volume * 100)}%</span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

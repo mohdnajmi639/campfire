@@ -3,11 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
-import { Edit, FileIcon, Trash } from "lucide-react";
+import { Edit, FileIcon, Trash, ShieldAlert, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
 import { MemberRole } from "@/types";
+
+import { useModal } from "@/hooks/use-modal-store";
 
 interface ChatItemProps {
   id: string;
@@ -31,10 +33,10 @@ interface ChatItemProps {
   channelId: string;
 }
 
-const roleIconMap: Record<string, string> = {
-  [MemberRole.ADMIN]: "👑",
-  [MemberRole.MODERATOR]: "🛡️",
-  [MemberRole.GUEST]: "",
+const roleIconMap: Record<string, React.ReactNode> = {
+  [MemberRole.ADMIN]: <ShieldAlert className="h-4 w-4 text-discord-red" />,
+  [MemberRole.MODERATOR]: <ShieldCheck className="h-4 w-4 text-campfire-orange" />,
+  [MemberRole.GUEST]: null,
 };
 
 const DATE_FORMAT = "d MMM yyyy, HH:mm";
@@ -52,6 +54,7 @@ export function ChatItem({
   serverId,
   channelId,
 }: ChatItemProps) {
+  const { onOpen } = useModal();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,13 +111,15 @@ export function ChatItem({
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 min-w-0">
         <div className="flex items-center gap-x-2">
           <span className="text-sm font-semibold text-discord-text hover:underline cursor-pointer">
             {member.userId?.name}
           </span>
           {roleIconMap[member.role] && (
-            <span className="text-xs">{roleIconMap[member.role]}</span>
+            <ActionTooltip label={member.role} side="top">
+              <span className="text-xs flex items-center justify-center">{roleIconMap[member.role]}</span>
+            </ActionTooltip>
           )}
           <span className="text-xs text-discord-muted">
             {format(new Date(timestamp), DATE_FORMAT)}
@@ -123,11 +128,9 @@ export function ChatItem({
 
         {/* Image */}
         {isImage && (
-          <a
-            href={fileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative mt-2 block h-48 w-48 overflow-hidden rounded-md border border-discord-active"
+          <button
+            onClick={() => onOpen("imageViewer", { imageUrl: fileUrl })}
+            className="relative mt-2 block h-48 w-48 overflow-hidden rounded-md border border-discord-active cursor-zoom-in"
           >
             <Image
               src={fileUrl!}
@@ -135,7 +138,7 @@ export function ChatItem({
               fill
               className="object-cover"
             />
-          </a>
+          </button>
         )}
 
         {/* PDF */}

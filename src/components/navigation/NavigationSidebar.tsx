@@ -5,7 +5,6 @@ import Member from "@/models/Member";
 import { redirect } from "next/navigation";
 import { NavigationItem } from "./NavigationItem";
 import { NavigationAction } from "./NavigationAction";
-import { UserButton } from "./UserButton";
 import { Flame } from "lucide-react";
 import Link from "next/link";
 
@@ -53,10 +52,6 @@ export async function NavigationSidebar() {
       {/* Add Server */}
       <NavigationAction />
 
-      {/* User Button */}
-      <div className="mt-auto">
-        <UserButton name={user.name} image={user.image} />
-      </div>
     </div>
   );
 }

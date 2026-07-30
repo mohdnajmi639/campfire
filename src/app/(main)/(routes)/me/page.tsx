@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { UserRound, Check, X, UserPlus, Inbox } from "lucide-react";
+import { UserRound, Check, X, UserPlus, Inbox, Server } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
 
 export default function MePage() {
   const [tab, setTab] = useState<"friends" | "pending" | "add">("friends");
   const [friends, setFriends] = useState<any[]>([]);
+  const [serverInvites, setServerInvites] = useState<any[]>([]);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
@@ -21,8 +22,19 @@ export default function MePage() {
     }
   };
 
+  const fetchServerInvites = async () => {
+    try {
+      const res = await fetch("/api/invites");
+      const data = await res.json();
+      setServerInvites(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   useEffect(() => {
     fetchFriends();
+    fetchServerInvites();
   }, []);
 
   const handleAddFriend = async (e: React.FormEvent) => {
@@ -62,8 +74,28 @@ export default function MePage() {
     }
   };
 
+  const handleServerInviteAction = async (id: string, action: "accept" | "reject") => {
+    try {
+      const res = await fetch(`/api/invites/${id}`, {
+        method: action === "accept" ? "PATCH" : "DELETE",
+      });
+      
+      if (action === "accept" && res.ok) {
+        const data = await res.json();
+        // Force a full reload to get the new server in the sidebar
+        window.location.assign(`/servers/${data.serverId}`);
+        return;
+      }
+      
+      fetchServerInvites();
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const accepted = friends.filter((f) => f.status === "accepted");
   const pending = friends.filter((f) => f.status === "pending");
+  const pendingCount = pending.length + serverInvites.length;
 
   return (
     <div className="flex h-full flex-col bg-discord-chat">
@@ -90,9 +122,9 @@ export default function MePage() {
             }`}
           >
             Pending
-            {pending.length > 0 && (
+            {pendingCount > 0 && (
               <span className="bg-campfire-red text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                {pending.length}
+                {pendingCount}
               </span>
             )}
           </button>
@@ -172,49 +204,102 @@ export default function MePage() {
         )}
 
         {tab === "pending" && (
-          <div className="animate-fade-in">
-            <h2 className="text-xs font-bold text-discord-muted uppercase tracking-wide mb-4">
-              Pending — {pending.length}
-            </h2>
-            {pending.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 opacity-50">
-                <Inbox className="h-16 w-16 mb-4" />
-                <p>No pending friend requests.</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {pending.map((friend) => {
-                  const isReceiver = friend.actionUserId.toString() === friend.otherUser._id.toString();
-                  return (
-                    <div key={friend._id} className="flex items-center justify-between p-3 rounded-md hover:bg-discord-dark/50 group border-t border-transparent hover:border-discord-darker transition-colors">
-                      <div className="flex items-center gap-x-3">
-                        <UserAvatar src={friend.otherUser.image} name={friend.otherUser.name} className="h-8 w-8" />
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-discord-text group-hover:text-white transition-colors">{friend.otherUser.name}</span>
-                          <span className="text-xs text-discord-muted">Pending Request</span>
+          <div className="animate-fade-in space-y-8">
+            {/* Friend Requests */}
+            <div>
+              <h2 className="text-xs font-bold text-discord-muted uppercase tracking-wide mb-4">
+                Pending Friend Requests — {pending.length}
+              </h2>
+              {pending.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 opacity-50 text-sm">
+                  <p>No pending friend requests.</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {pending.map((friend) => {
+                    const isReceiver = friend.actionUserId.toString() === friend.otherUser._id.toString();
+                    return (
+                      <div key={friend._id} className="flex items-center justify-between p-3 rounded-md hover:bg-discord-dark/50 group border-t border-transparent hover:border-discord-darker transition-colors">
+                        <div className="flex items-center gap-x-3">
+                          <UserAvatar src={friend.otherUser.image} name={friend.otherUser.name} className="h-8 w-8" />
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-discord-text group-hover:text-white transition-colors">{friend.otherUser.name}</span>
+                            <span className="text-xs text-discord-muted">Pending Request</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-x-2">
+                          {isReceiver && (
+                            <button
+                              onClick={() => handleAction(friend._id, "accept")}
+                              className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-green hover:bg-discord-dark transition-colors"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleAction(friend._id, "reject")}
+                            className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-red hover:bg-discord-dark transition-colors"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-x-2">
-                        {isReceiver && (
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Server Invites */}
+            <div>
+              <h2 className="text-xs font-bold text-discord-muted uppercase tracking-wide mb-4">
+                Server Invites — {serverInvites.length}
+              </h2>
+              {serverInvites.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-32 opacity-50 text-sm">
+                  <p>No server invites.</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {serverInvites.map((invite) => {
+                    const server = invite.server;
+                    const inviter = invite.inviter;
+                    return (
+                      <div key={invite._id} className="flex items-center justify-between p-3 rounded-md hover:bg-discord-dark/50 group border-t border-transparent hover:border-discord-darker transition-colors">
+                        <div className="flex items-center gap-x-3">
+                          <div className="relative">
+                            <UserAvatar src={server?.imageUrl} name={server?.name} className="h-10 w-10 rounded-[12px] bg-discord-darker" />
+                            <div className="absolute -bottom-1 -right-1 ring-2 ring-discord-chat rounded-full">
+                              <UserAvatar src={inviter?.image} name={inviter?.name} className="h-5 w-5" />
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-discord-text group-hover:text-white transition-colors">{server?.name}</span>
+                            <span className="text-xs text-discord-muted">Invited by <span className="text-white">{inviter?.name}</span></span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-x-2">
                           <button
-                            onClick={() => handleAction(friend._id, "accept")}
+                            onClick={() => handleServerInviteAction(invite._id, "accept")}
                             className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-green hover:bg-discord-dark transition-colors"
+                            title="Accept Invite"
                           >
                             <Check className="h-4 w-4" />
                           </button>
-                        )}
-                        <button
-                          onClick={() => handleAction(friend._id, "reject")}
-                          className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-red hover:bg-discord-dark transition-colors"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+                          <button
+                            onClick={() => handleServerInviteAction(invite._id, "reject")}
+                            className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-red hover:bg-discord-dark transition-colors"
+                            title="Decline Invite"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

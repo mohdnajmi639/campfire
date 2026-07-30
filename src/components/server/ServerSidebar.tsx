@@ -74,7 +74,6 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
         role={role}
       />
       <div className="flex-1 overflow-y-auto px-2">
-        {/* Text Channels */}
         {textChannels.length > 0 && (
           <ServerSection
             label="Text Channels"
@@ -92,6 +91,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
+                currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
               />
             ))}
           </ServerSection>
@@ -115,6 +115,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
+                currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
               />
             ))}
           </ServerSection>
@@ -138,6 +139,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
+                currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
               />
             ))}
           </ServerSection>

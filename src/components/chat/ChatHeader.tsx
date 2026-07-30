@@ -3,6 +3,7 @@
 import { Hash, Mic, Menu } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
 import { SocketIndicator } from "@/components/socket-indicator";
+import { ActionTooltip } from "@/components/action-tooltip";
 
 interface ChatHeaderProps {
   name: string;
@@ -29,7 +30,9 @@ export function ChatHeader({
     <div className="flex h-12 items-center border-b-2 border-discord-darker/50 px-3 font-semibold">
       <div className="flex items-center gap-2">
         {type === "channel" && Icon && (
-          <Icon className="h-5 w-5 text-discord-muted" />
+          <ActionTooltip label={channelType === "TEXT" ? "Text Channel" : "Voice Channel"} side="bottom">
+            <Icon className="h-5 w-5 text-discord-muted outline-none" />
+          </ActionTooltip>
         )}
         {type === "conversation" && (
           <UserAvatar src={imageUrl} name={name} className="h-7 w-7" />
