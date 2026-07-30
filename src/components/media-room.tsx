@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useAudioIndicator } from "@/hooks/use-audio-indicator";
 import { useVoiceStore } from "@/hooks/use-voice-store";
+import { useMemberStore } from "@/hooks/use-member-store";
 import { Loader2, Maximize } from "lucide-react";
 import "@livekit/components-styles";
 import {
@@ -127,7 +128,7 @@ function CustomVideoConference() {
 
   return (
     <div className="flex flex-col h-full relative bg-discord-chat">
-      <div className="flex-1 overflow-hidden p-2 flex gap-2">
+      <div className="flex-1 overflow-hidden p-2 flex gap-2 pb-16">
         {focusTrack ? (
           <>
             <div id="screenshare-container" className="flex-1 relative bg-black rounded-lg overflow-hidden group">
@@ -153,7 +154,11 @@ function CustomVideoConference() {
           </GridLayout>
         )}
       </div>
-      <ControlBar controls={{ camera: true, microphone: true, screenShare: true, leave: true }} />
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 w-full flex justify-center pointer-events-none">
+        <div className="pointer-events-auto">
+          <ControlBar controls={{ camera: true, microphone: true, screenShare: true, leave: true }} />
+        </div>
+      </div>
       <RoomAudioRenderer />
     </div>
   );
@@ -186,6 +191,7 @@ function CustomParticipantTile(props: any) {
 
   const userVolumes = useVoiceStore((s) => s.userVolumes);
   const setUserVolume = useVoiceStore((s) => s.setUserVolume);
+  const membersStore = useMemberStore((state) => state.members);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -200,8 +206,12 @@ function CustomParticipantTile(props: any) {
   if (!trackRef) return <ParticipantTile {...props} />;
 
   const participant = trackRef.participant;
-  const isSpeaking = participant?.isSpeaking;
+  const localIsSpeaking = useVoiceStore((s) => s.isSpeaking);
+  const isSpeaking = participant?.isLocal ? localIsSpeaking : participant?.isSpeaking;
   const volume = userVolumes[participant.identity] ?? 1;
+  
+  const memberData = Object.values(membersStore).find((m) => m.name === participant.identity);
+  const displayName = memberData?.nickname || memberData?.name || participant.name || participant.identity;
   
   // A camera is considered OFF if it's a camera track AND it has no publication (placeholder) OR it is explicitly muted.
   const isCameraOff = trackRef.source === Track.Source.Camera && (!trackRef.publication || trackRef.publication.isMuted);
@@ -229,7 +239,7 @@ function CustomParticipantTile(props: any) {
       <ParticipantTile {...props} trackRef={trackRef} className="w-full h-full absolute inset-0" />
       
       {isCameraOff && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#111214] pointer-events-none">
+        <div className="absolute inset-0 z-0 flex items-center justify-center bg-[#111214] pointer-events-none">
           <div
             className={cn(
               "relative h-24 w-24 rounded-full flex items-center justify-center bg-discord-active text-discord-text text-3xl font-semibold overflow-hidden transition-all duration-200 pointer-events-auto",
@@ -242,15 +252,23 @@ function CustomParticipantTile(props: any) {
               <Image
                 fill
                 src={imageUrl}
-                alt={participant.name || participant.identity}
+                alt={displayName}
                 className="object-cover"
               />
             ) : (
-              <span>{(participant.name || participant.identity || "?")[0].toUpperCase()}</span>
+              <span>{(displayName || "?")[0].toUpperCase()}</span>
             )}
           </div>
         </div>
       )}
+
+      {/* Always render custom name tag for consistency (hiding LiveKit's default via CSS) */}
+      <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-sm font-semibold text-white pointer-events-none z-10">
+        {!participant.isMicrophoneEnabled && (
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"></path><path d="M5 10v2a7 7 0 0 0 12 5l-1.5-1.5a5 5 0 0 1-9-3.5v-2"></path><path d="M9.86 4.14A3 3 0 0 1 15 7v4.86l-5-5Z"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+        )}
+        <span className="max-w-[150px] truncate">{displayName}</span>
+      </div>
 
       {contextMenu && (
         <div
@@ -329,6 +347,8 @@ function MediaStateSync() {
 function VoiceParticipantTracker() {
   const participants = useParticipants();
   const setParticipants = useVoiceStore((s) => s.setParticipants);
+  const membersStore = useMemberStore((state) => state.members);
+  const localIsSpeaking = useVoiceStore((s) => s.isSpeaking);
 
   useEffect(() => {
     const mapped = participants.map((p) => {
@@ -337,29 +357,40 @@ function VoiceParticipantTracker() {
         const meta = JSON.parse(p.metadata || "{}");
         imageUrl = meta.image;
       } catch (e) {}
+      
+      const memberData = Object.values(membersStore).find((m) => m.name === p.identity);
+      const displayName = memberData?.nickname || memberData?.name || p.name || p.identity;
 
       return {
         identity: p.identity,
-        name: p.name || p.identity,
-        isSpeaking: p.isSpeaking,
+        name: displayName,
+        isSpeaking: p.isLocal ? localIsSpeaking : p.isSpeaking,
         avatarUrl: imageUrl,
         joinedAt: p.joinedAt?.getTime(),
+        isMicMuted: !p.isMicrophoneEnabled,
+        isCameraOn: p.isCameraEnabled,
+        isScreenSharing: p.isScreenShareEnabled,
       };
     });
     setParticipants(mapped);
-  }, [participants, setParticipants]);
+  }, [participants, setParticipants, membersStore, localIsSpeaking]);
 
   return null;
 }
 
+import { useSettingsStore } from "@/hooks/use-settings-store";
+
 function VoiceTracker() {
   const { localParticipant } = useLocalParticipant();
   const micPub = localParticipant?.getTrackPublication(Track.Source.Microphone);
-  const volume = useTrackVolume(micPub as any);
+  const track = micPub?.track;
+  const volume = useTrackVolume(track as any);
   const setSpeaking = useVoiceStore((s) => s.setSpeaking);
+  const micThreshold = useSettingsStore((s) => s.micThreshold);
 
   useEffect(() => {
-    const speaking = (volume ?? 0) > 0.02;
+    // Uses the user's custom threshold from settings
+    const speaking = (volume ?? 0) > micThreshold;
     setSpeaking(speaking);
     if (speaking) {
       document.body.classList.add("is-speaking-fast");

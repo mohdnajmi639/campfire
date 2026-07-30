@@ -1,9 +1,12 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
+import { useSettingsStore } from "@/hooks/use-settings-store";
 import { FileUpload } from "@/components/file-upload";
+import { MicTester } from "./MicTester";
 import { X, LogOut } from "lucide-react";
 import { signOut } from "next-auth/react";
 
@@ -12,6 +15,9 @@ export function UserSettingsModal() {
   const router = useRouter();
   const [imageUrl, setImageUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  const micThreshold = useSettingsStore((s) => s.micThreshold);
+  const setMicThreshold = useSettingsStore((s) => s.setMicThreshold);
 
   const isModalOpen = isOpen && type === "userSettings";
 
@@ -70,6 +76,36 @@ export function UserSettingsModal() {
                 setImageUrl(url || "");
               }}
             />
+          </div>
+        </div>
+
+        <div className="mb-6">
+          <label className="mb-4 block text-xs font-bold uppercase tracking-wide text-discord-muted">
+            Voice Settings
+          </label>
+          <div className="space-y-4 bg-black/20 p-4 rounded-md">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-semibold text-discord-text">Input Sensitivity</span>
+                <span className="text-xs text-discord-muted font-mono">{Math.round(micThreshold * 100)}%</span>
+              </div>
+              <p className="text-xs text-discord-muted mb-3 leading-relaxed">
+                Automatically determines when your voice is transmitted. If your green ring is constantly lit up by background noise, slide this slightly to the right.
+              </p>
+              <div className="flex items-center gap-x-3">
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={micThreshold}
+                  onChange={(e) => setMicThreshold(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-discord-dark rounded-lg appearance-none cursor-pointer accent-campfire-blue"
+                />
+              </div>
+            </div>
+            
+            <MicTester />
           </div>
         </div>
 

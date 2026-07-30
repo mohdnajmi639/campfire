@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,7 +29,7 @@ export function ChangeNicknameModal() {
       await fetch(`/api/members/${data.member._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nickname }),
+        body: JSON.stringify({ nickname, serverId: data.server?._id }),
       });
       router.refresh();
       onClose();

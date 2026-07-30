@@ -42,10 +42,31 @@ export async function GET(
                 const meta = JSON.parse(p.metadata || "{}");
                 avatarUrl = meta.image || "";
              } catch (e) {}
+
+             // Default assumptions if tracks are missing
+             let isMicMuted = true;
+             let isCameraOn = false;
+             let isScreenSharing = false;
+
+             if (p.tracks) {
+                p.tracks.forEach(t => {
+                   if (t.source === 2) { // TrackSource.MICROPHONE
+                      isMicMuted = t.muted;
+                   } else if (t.source === 1) { // TrackSource.CAMERA
+                      isCameraOn = !t.muted;
+                   } else if (t.source === 3) { // TrackSource.SCREEN_SHARE
+                      isScreenSharing = !t.muted;
+                   }
+                });
+             }
+
              return {
                 identity: p.identity,
                 name: p.name || p.identity,
-                avatarUrl
+                avatarUrl,
+                isMicMuted,
+                isCameraOn,
+                isScreenSharing
              };
           });
 

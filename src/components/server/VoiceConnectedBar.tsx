@@ -95,7 +95,7 @@ export function VoiceConnectedBar() {
           </button>
         </ActionTooltip>
 
-        <ActionTooltip label={isScreenSharing ? "Stop sharing" : "Share Your Screen"}>
+        <ActionTooltip label={isScreenSharing ? "Stop sharing" : "Share Screen"}>
           <button
             onClick={() => triggerMediaAction("screen", !isScreenSharing)}
             className={cn(

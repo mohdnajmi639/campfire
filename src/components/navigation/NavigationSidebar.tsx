@@ -7,6 +7,7 @@ import { NavigationItem } from "./NavigationItem";
 import { NavigationAction } from "./NavigationAction";
 import { Flame } from "lucide-react";
 import Link from "next/link";
+import { UserRealtimeUpdates } from "./UserRealtimeUpdates";
 
 export async function NavigationSidebar() {
   const user = await currentUser();
@@ -51,7 +52,7 @@ export async function NavigationSidebar() {
 
       {/* Add Server */}
       <NavigationAction />
-
+      <UserRealtimeUpdates userId={user._id.toString()} />
     </div>
   );
 }

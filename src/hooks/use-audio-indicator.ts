@@ -25,7 +25,7 @@ export function useAudioIndicator() {
         osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
         
         gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.05);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.05);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
       } else if (type === "leave") {
         // Descending bloop
@@ -33,7 +33,7 @@ export function useAudioIndicator() {
         osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
         
         gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.05);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.05);
         gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
       } else if (type === "mute") {
         // Double descending beep
@@ -41,11 +41,11 @@ export function useAudioIndicator() {
         osc.frequency.setValueAtTime(250, now + 0.15); 
         
         gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.02);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         
         gain.gain.setValueAtTime(0, now + 0.15);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.17);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.17);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.27);
       } else if (type === "unmute") {
         // Double ascending beep
@@ -53,11 +53,11 @@ export function useAudioIndicator() {
         osc.frequency.setValueAtTime(450, now + 0.15);
         
         gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.02);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
         
         gain.gain.setValueAtTime(0, now + 0.15);
-        gain.gain.linearRampToValueAtTime(0.1, now + 0.17);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.17);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.27);
       }
 

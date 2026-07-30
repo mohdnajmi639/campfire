@@ -1,18 +1,19 @@
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { useModal } from "@/hooks/use-modal-store";
-import { X, ZoomIn, ZoomOut } from "lucide-react";
-import Image from "next/image";
-import { useState, useRef, useEffect, MouseEvent as ReactMouseEvent } from "react";
+import { X, ZoomIn, ZoomOut, Download } from "lucide-react";
 
 export function ImageViewerModal() {
   const { isOpen, type, data, onClose } = useModal();
   const [scale, setScale] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
-
+  
   const isModalOpen = isOpen && type === "imageViewer";
   const { imageUrl } = data;
 
@@ -26,98 +27,134 @@ export function ImageViewerModal() {
 
   if (!isModalOpen || !imageUrl) return null;
 
-  const handleZoomIn = () => setScale((s) => Math.min(s + 0.5, 4));
+  const handleZoomIn = () => {
+    setScale((prev) => Math.min(prev + 0.25, 4));
+  };
+
   const handleZoomOut = () => {
-    setScale((s) => {
-      const newScale = Math.max(s - 0.5, 1);
-      if (newScale === 1) setPosition({ x: 0, y: 0 }); // Reset pan when fully zoomed out
+    setScale((prev) => {
+      const newScale = Math.max(prev - 0.25, 0.5);
+      if (newScale === 1) {
+        setPosition({ x: 0, y: 0 });
+      }
       return newScale;
     });
   };
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (e.deltaY < 0) handleZoomIn();
-    else handleZoomOut();
+    e.preventDefault();
+    if (e.deltaY < 0) {
+      handleZoomIn();
+    } else {
+      handleZoomOut();
+    }
   };
 
-  const handleMouseDown = (e: ReactMouseEvent) => {
-    if (scale <= 1) return;
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (scale > 1) {
+      setIsDragging(true);
+      dragStartRef.current = {
+        x: e.clientX - position.x,
+        y: e.clientY - position.y,
+      };
+    }
   };
 
-  const handleMouseMove = (e: ReactMouseEvent) => {
-    if (!isDragging || scale <= 1) return;
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
-    });
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDragging && scale > 1) {
+      setPosition({
+        x: e.clientX - dragStartRef.current.x,
+        y: e.clientY - dragStartRef.current.y,
+      });
+    }
   };
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
 
-  const handleClose = () => {
-    setScale(1);
-    setPosition({ x: 0, y: 0 });
-    onClose();
+  // Prevent default drag behavior on the image itself
+  const handleDragStart = (e: React.DragEvent) => {
+    e.preventDefault();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 animate-fade-in backdrop-blur-sm">
-      <button
-        onClick={handleClose}
-        className="absolute top-4 right-4 z-[60] rounded-full p-2 bg-black/50 text-discord-muted hover:text-white hover:bg-black/80 transition-colors"
-      >
-        <X className="h-6 w-6" />
-      </button>
-
-      {/* Controls */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-4 rounded-full bg-black/50 px-4 py-2 backdrop-blur-md">
-        <button onClick={handleZoomOut} disabled={scale <= 1} className="text-white disabled:opacity-50 hover:bg-white/10 p-1.5 rounded-full transition-colors">
-          <ZoomOut className="h-5 w-5" />
-        </button>
-        <span className="text-sm font-semibold text-white min-w-[3rem] text-center">
-          {Math.round(scale * 100)}%
-        </span>
-        <button onClick={handleZoomIn} disabled={scale >= 4} className="text-white disabled:opacity-50 hover:bg-white/10 p-1.5 rounded-full transition-colors">
-          <ZoomIn className="h-5 w-5" />
-        </button>
+      {/* Top Controls Bar */}
+      <div className="absolute top-0 left-0 w-full p-4 flex items-center justify-end gap-x-4 bg-gradient-to-b from-black/80 to-transparent z-10 pointer-events-none">
+        <div className="flex gap-x-2 pointer-events-auto">
+          <a
+            href={imageUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            className="text-discord-muted hover:text-white transition-colors p-2 bg-black/50 rounded-md hover:bg-discord-dark"
+            title="Open Original"
+          >
+            <Download className="h-5 w-5" />
+          </a>
+          <button 
+            onClick={handleZoomIn} 
+            disabled={scale >= 4}
+            className="text-discord-muted hover:text-white transition-colors p-2 bg-black/50 rounded-md hover:bg-discord-dark disabled:opacity-50"
+          >
+            <ZoomIn className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={handleZoomOut} 
+            disabled={scale <= 0.5}
+            className="text-discord-muted hover:text-white transition-colors p-2 bg-black/50 rounded-md hover:bg-discord-dark disabled:opacity-50"
+          >
+            <ZoomOut className="h-5 w-5" />
+          </button>
+          <button 
+            onClick={onClose} 
+            className="text-discord-muted hover:text-white transition-colors p-2 bg-black/50 rounded-md hover:bg-discord-red ml-4"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
-      <div
+      {/* Image Container */}
+      <div 
         ref={containerRef}
-        className="relative flex h-full w-full items-center justify-center overflow-hidden outline-none select-none"
+        className="w-full h-full flex items-center justify-center overflow-hidden"
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={(e) => {
+          // Close if clicking outside the image
+          if (e.target === containerRef.current && scale === 1) {
+            onClose();
+          }
+        }}
       >
-        <div
-          className="relative transition-transform duration-200 ease-out"
-          style={{
+        <div 
+          className="relative transition-transform duration-100 ease-out flex items-center justify-center"
+          style={{ 
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "zoom-in",
-          }}
-          onClick={(e) => {
-            // Only zoom in on click if not dragging
-            if (scale === 1) {
-              e.stopPropagation();
-              handleZoomIn();
-            }
+            cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default"
           }}
         >
-          {/* Prevent dragging ghost image */}
           <img
             src={imageUrl}
-            alt="Maximized view"
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-md shadow-2xl pointer-events-none"
+            alt="Expanded view"
+            className="max-w-[90vw] max-h-[90vh] object-contain select-none"
+            onDragStart={handleDragStart}
             draggable={false}
           />
         </div>
       </div>
+      
+      {/* Hint Tooltip */}
+      {scale === 1 && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/70 rounded-full text-xs text-white/70 pointer-events-none">
+          Scroll to zoom • Click and drag to pan
+        </div>
+      )}
     </div>
   );
 }

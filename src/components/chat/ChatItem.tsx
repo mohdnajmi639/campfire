@@ -17,6 +17,7 @@ interface ChatItemProps {
   member: {
     _id: string;
     role: string;
+    nickname?: string;
     userId: {
       _id: string;
       name: string;
@@ -39,7 +40,7 @@ const roleIconMap: Record<string, React.ReactNode> = {
   [MemberRole.GUEST]: null,
 };
 
-const DATE_FORMAT = "d MMM yyyy, HH:mm";
+const DATE_FORMAT = "d MMM yyyy, h:mm a";
 
 export function ChatItem({
   id,
@@ -114,7 +115,7 @@ export function ChatItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-x-2">
           <span className="text-sm font-semibold text-discord-text hover:underline cursor-pointer">
-            {member.userId?.name}
+            {member.nickname || member.userId?.name}
           </span>
           {roleIconMap[member.role] && (
             <ActionTooltip label={member.role} side="top">

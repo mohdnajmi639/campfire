@@ -59,6 +59,10 @@ export async function PATCH(
     invite.status = "accepted";
     await invite.save();
 
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`user-${user._id}`, "user-update", {});
+    await pusherServer.trigger(`server-${server._id}`, "server-update", {});
+
     return NextResponse.json({ success: true, serverId: server._id });
   } catch (error) {
     console.error("[INVITE_PATCH]", error);
@@ -87,6 +91,9 @@ export async function DELETE(
 
     invite.status = "declined";
     await invite.save();
+
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`user-${user._id}`, "user-update", {});
 
     return new NextResponse("Invite declined", { status: 200 });
   } catch (error) {

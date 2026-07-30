@@ -56,6 +56,9 @@ export async function POST(req: Request) {
       $push: { channels: channel._id },
     });
 
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`server-${serverId}`, "server-update", {});
+
     return NextResponse.json(channel, { status: 201 });
   } catch (error) {
     console.error("[CHANNELS_POST]", error);

@@ -31,6 +31,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Server not found" }, { status: 404 });
     }
 
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`server-${serverId}`, "server-update", {});
+
     return NextResponse.json(server);
   } catch (error) {
     console.error("[SERVER_PATCH]", error);
@@ -66,6 +69,9 @@ export async function DELETE(
     await Channel.deleteMany({ serverId });
     await Member.deleteMany({ serverId });
     await Server.findByIdAndDelete(serverId);
+
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`server-${serverId}`, "server-update", {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

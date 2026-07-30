@@ -5,6 +5,7 @@ import Member from "@/models/Member";
 import Conversation from "@/models/Conversation";
 import User from "@/models/User";
 import Friendship from "@/models/Friendship";
+import DirectMessage from "@/models/DirectMessage";
 import { DMItem } from "./DMItem";
 import { Search, UserRound } from "lucide-react";
 import { UserPanel } from "@/components/user-panel";
@@ -37,7 +38,16 @@ export async function DMSidebar() {
     .sort({ updatedAt: -1 })
     .lean();
 
-  // Fetch accepted friendships to enforce privacy
+  const conversationIds = conversations.map(c => c._id);
+  
+  // Find all conversations that have at least one message
+  const messages = await DirectMessage.aggregate([
+    { $match: { conversationId: { $in: conversationIds } } },
+    { $group: { _id: "$conversationId" } }
+  ]);
+  const activeConversationIds = messages.map(m => m._id.toString());
+
+  // Fetch accepted friendships
   const friendships = await Friendship.find({
     $or: [{ user1: user._id }, { user2: user._id }],
     status: "accepted"
@@ -79,9 +89,12 @@ export async function DMSidebar() {
           const otherUser = otherMember.userId;
 
           if (!otherUser) return null;
+
+          const isFriend = friendIds.includes(otherUser._id.toString());
+          const hasMessages = activeConversationIds.includes(conv._id.toString());
           
-          // Enforce privacy: only show friends
-          if (!friendIds.includes(otherUser._id.toString())) return null;
+          // Only show if they are friends OR have exchanged messages
+          if (!isFriend && !hasMessages) return null;
 
           return (
             <DMItem

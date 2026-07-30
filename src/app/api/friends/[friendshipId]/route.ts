@@ -38,6 +38,10 @@ export async function PATCH(
     friendship.status = "accepted";
     await friendship.save();
 
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`user-${friendship.user1.toString()}`, "user-update", {});
+    await pusherServer.trigger(`user-${friendship.user2.toString()}`, "user-update", {});
+
     return NextResponse.json(friendship);
   } catch (error) {
     console.error("[FRIENDSHIP_PATCH]", error);
@@ -73,6 +77,10 @@ export async function DELETE(
     }
 
     await Friendship.findByIdAndDelete(friendshipId);
+
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`user-${friendship.user1.toString()}`, "user-update", {});
+    await pusherServer.trigger(`user-${friendship.user2.toString()}`, "user-update", {});
 
     return new NextResponse("Success", { status: 200 });
   } catch (error) {

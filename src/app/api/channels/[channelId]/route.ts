@@ -51,6 +51,9 @@ export async function PATCH(
       );
     }
 
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`server-${serverId}`, "server-update", {});
+
     return NextResponse.json(channel);
   } catch (error) {
     console.error("[CHANNEL_PATCH]", error);
@@ -110,6 +113,9 @@ export async function DELETE(
     await Server.findByIdAndUpdate(serverId, {
       $pull: { channels: channelId },
     });
+
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`server-${serverId}`, "server-update", {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

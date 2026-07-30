@@ -3,6 +3,7 @@ import dbConnect from "@/lib/db";
 import Server from "@/models/Server";
 import Member from "@/models/Member";
 import Channel from "@/models/Channel";
+import Friendship from "@/models/Friendship";
 import { ChannelType } from "@/types";
 import User from "@/models/User";
 import { redirect } from "next/navigation";
@@ -60,9 +61,30 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
 
   const role = currentMember.role;
 
+  // Fetch accepted friendships
+  const friendships = await Friendship.find({
+    $or: [{ user1: user._id }, { user2: user._id }],
+    status: "accepted"
+  }).lean();
+
+  const friendIds = friendships.map(f => 
+    f.user1.toString() === user._id.toString() ? f.user2.toString() : f.user1.toString()
+  );
+
+  const plainMembers = members.map((m: any) => ({
+    _id: m._id?.toString(),
+    role: m.role,
+    nickname: m.nickname,
+    userId: m.userId ? {
+      _id: m.userId._id?.toString(),
+      name: m.userId.name,
+      image: m.userId.image,
+    } : null
+  }));
+
   return (
     <div className="flex h-full w-60 flex-col bg-discord-channel">
-      <ServerRealtimeUpdates serverId={serverId} />
+      <ServerRealtimeUpdates serverId={serverId} initialMembers={plainMembers} />
       <ServerHeader
         server={{
           _id: server._id.toString(),
@@ -163,6 +185,8 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 isCurrentUser={member.userId?._id?.toString() === user._id.toString()}
+                currentUserRole={role}
+                isFriend={friendIds.includes(member.userId?._id?.toString())}
               />
             ))}
           </ServerSection>

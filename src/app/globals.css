@@ -182,4 +182,9 @@ body {
   background: transparent !important;
 }
 
+/* Hide LiveKit Default Name Tag (using custom overlay instead) */
+.lk-participant-metadata {
+  display: none !important;
+}
+
 /* End of Base Styles */

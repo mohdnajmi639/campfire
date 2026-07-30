@@ -19,6 +19,6 @@ export function useLiveKitStatus(serverId: string) {
       if (!res.ok) throw new Error("Failed to fetch livekit status");
       return (await res.json()) as Record<string, LiveKitStatus>;
     },
-    refetchInterval: 3000, // Poll every 3 seconds
+    refetchInterval: 3000, // Poll every 3 seconds to prevent dev server from choking
   });
 }

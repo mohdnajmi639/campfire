@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -5,7 +6,7 @@ import { UserRound, Check, X, UserPlus, Inbox, Server } from "lucide-react";
 import { UserAvatar } from "@/components/user-avatar";
 
 export default function MePage() {
-  const [tab, setTab] = useState<"friends" | "pending" | "add">("friends");
+  const [tab, setTab] = useState<"friends" | "pendingFriends" | "pendingServers" | "add">("friends");
   const [friends, setFriends] = useState<any[]>([]);
   const [serverInvites, setServerInvites] = useState<any[]>([]);
   const [username, setUsername] = useState("");
@@ -95,7 +96,8 @@ export default function MePage() {
 
   const accepted = friends.filter((f) => f.status === "accepted");
   const pending = friends.filter((f) => f.status === "pending");
-  const pendingCount = pending.length + serverInvites.length;
+  const pendingFriendsCount = pending.length;
+  const pendingServersCount = serverInvites.length;
 
   return (
     <div className="flex h-full flex-col bg-discord-chat">
@@ -116,15 +118,28 @@ export default function MePage() {
             All
           </button>
           <button
-            onClick={() => setTab("pending")}
+            onClick={() => setTab("pendingFriends")}
             className={`px-2 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-x-1.5 ${
-              tab === "pending" ? "bg-discord-dark/50 text-white" : "text-discord-muted hover:bg-discord-dark/50 hover:text-discord-text"
+              tab === "pendingFriends" ? "bg-discord-dark/50 text-white" : "text-discord-muted hover:bg-discord-dark/50 hover:text-discord-text"
             }`}
           >
-            Pending
-            {pendingCount > 0 && (
+            Pending Friends
+            {pendingFriendsCount > 0 && (
               <span className="bg-campfire-red text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                {pendingCount}
+                {pendingFriendsCount}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setTab("pendingServers")}
+            className={`px-2 py-1 rounded-md text-sm font-medium transition-colors flex items-center gap-x-1.5 ${
+              tab === "pendingServers" ? "bg-discord-dark/50 text-white" : "text-discord-muted hover:bg-discord-dark/50 hover:text-discord-text"
+            }`}
+          >
+            Server Invites
+            {pendingServersCount > 0 && (
+              <span className="bg-campfire-red text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                {pendingServersCount}
               </span>
             )}
           </button>
@@ -179,7 +194,7 @@ export default function MePage() {
             {accepted.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 opacity-50">
                 <UserRound className="h-16 w-16 mb-4" />
-                <p>You don't have any friends yet.</p>
+                <p>You don&apos;t have any friends yet.</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -203,7 +218,7 @@ export default function MePage() {
           </div>
         )}
 
-        {tab === "pending" && (
+        {tab === "pendingFriends" && (
           <div className="animate-fade-in space-y-8">
             {/* Friend Requests */}
             <div>
@@ -211,7 +226,8 @@ export default function MePage() {
                 Pending Friend Requests — {pending.length}
               </h2>
               {pending.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 opacity-50 text-sm">
+                <div className="flex flex-col items-center justify-center h-64 opacity-50 text-sm">
+                  <UserPlus className="h-16 w-16 mb-4" />
                   <p>No pending friend requests.</p>
                 </div>
               ) : (
@@ -249,14 +265,19 @@ export default function MePage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
 
+        {tab === "pendingServers" && (
+          <div className="animate-fade-in space-y-8">
             {/* Server Invites */}
             <div>
               <h2 className="text-xs font-bold text-discord-muted uppercase tracking-wide mb-4">
                 Server Invites — {serverInvites.length}
               </h2>
               {serverInvites.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-32 opacity-50 text-sm">
+                <div className="flex flex-col items-center justify-center h-64 opacity-50 text-sm">
+                  <Server className="h-16 w-16 mb-4" />
                   <p>No server invites.</p>
                 </div>
               ) : (

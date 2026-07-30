@@ -103,6 +103,9 @@ export async function POST(req: Request) {
     await friendship.populate("user1", "name email image");
     await friendship.populate("user2", "name email image");
 
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`user-${targetUser._id}`, "user-update", {});
+
     const otherUser = (isUser1Lesser ? friendship.user2 : friendship.user1) as any;
 
     return NextResponse.json({

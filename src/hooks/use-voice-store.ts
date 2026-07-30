@@ -13,6 +13,9 @@ export interface VoiceParticipant {
   isSpeaking: boolean;
   avatarUrl?: string;
   joinedAt?: number;
+  isMicMuted?: boolean;
+  isCameraOn?: boolean;
+  isScreenSharing?: boolean;
 }
 
 export interface VoiceState {

@@ -37,10 +37,13 @@ export async function POST(
       if (existing.status === "pending") {
         return new NextResponse("Already invited", { status: 400 });
       } else {
-        // Reset to pending if it was declined previously
         existing.status = "pending";
         existing.inviter = user._id as any; // Update inviter
         await existing.save();
+
+        const { pusherServer } = await import("@/lib/pusher");
+        await pusherServer.trigger(`user-${friendId}`, "user-update", {});
+
         return NextResponse.json(existing);
       }
     }
@@ -51,6 +54,9 @@ export async function POST(
       invitee: friendId,
       status: "pending",
     });
+
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`user-${friendId}`, "user-update", {});
 
     return NextResponse.json(invite);
   } catch (error) {

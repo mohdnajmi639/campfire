@@ -3,6 +3,7 @@ import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
 import Member from "@/models/Member";
 import { MemberRole } from "@/types";
+import { pusherServer } from "@/lib/pusher";
 
 export async function PATCH(
   req: Request,
@@ -32,6 +33,9 @@ export async function PATCH(
         { new: true }
       ).populate("userId");
       
+      const serverKey = `server-${serverId}`;
+      await pusherServer.trigger(serverKey, "member-update", member);
+      
       return NextResponse.json(member);
     }
 
@@ -51,6 +55,9 @@ export async function PATCH(
       { role },
       { new: true }
     ).populate("userId");
+
+    const serverKey = `server-${serverId}`;
+    await pusherServer.trigger(serverKey, "member-update", member);
 
     return NextResponse.json(member);
   } catch (error) {
@@ -108,6 +115,9 @@ export async function DELETE(
     await Server.findByIdAndUpdate(serverId, {
       $pull: { members: memberId },
     });
+
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`server-${serverId}`, "server-update", {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

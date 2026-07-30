@@ -41,6 +41,9 @@ export async function PATCH(
       await Server.findByIdAndUpdate(serverId, {
         $pull: { members: member._id },
       });
+      
+      const { pusherServer } = await import("@/lib/pusher");
+      await pusherServer.trigger(`server-${serverId}`, "server-update", {});
     }
 
     return NextResponse.json({ success: true });

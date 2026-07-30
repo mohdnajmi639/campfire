@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -6,7 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { MemberRole, ChannelType } from "@/types";
 import { useModal } from "@/hooks/use-modal-store";
-import { Edit, Lock, Trash, Hash, Mic, Video } from "lucide-react";
+import { Edit, Lock, Trash, Hash, Mic, Video, MicOff, ScreenShare } from "lucide-react";
 import { ActionTooltip } from "@/components/action-tooltip";
 import { UserAvatar } from "@/components/user-avatar";
 import { useLiveKitStatus } from "@/hooks/use-livekit-status";
@@ -208,8 +209,14 @@ function ParticipantItem({ participant, serverId, currentMember }: { participant
         setContextMenu(null);
       }
     };
-    if (contextMenu) document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    if (contextMenu) {
+      document.addEventListener("click", handleClickOutside);
+      document.addEventListener("contextmenu", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("contextmenu", handleClickOutside);
+    };
   }, [contextMenu]);
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -230,13 +237,18 @@ function ParticipantItem({ participant, serverId, currentMember }: { participant
           name={participant.name}
           className={cn(
             "h-6 w-6 transition-all duration-75",
-            participant.isSpeaking && "ring-2 ring-discord-blue"
+            participant.isSpeaking && "ring-2 ring-green-500"
           )}
         />
         <div className="flex flex-col leading-tight overflow-hidden">
           <span className="text-xs font-semibold text-discord-text truncate">
             {participant.name}
           </span>
+        </div>
+        <div className="ml-auto flex items-center gap-1.5 text-discord-muted">
+          {participant.isScreenSharing && <ScreenShare className="h-3.5 w-3.5 text-campfire-blue" />}
+          {participant.isCameraOn && <Video className="h-3.5 w-3.5" />}
+          {participant.isMicMuted && <MicOff className="h-3.5 w-3.5 text-discord-red" />}
         </div>
       </div>
 

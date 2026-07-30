@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal-store";
 import { UserAvatar } from "@/components/user-avatar";
+import { cn } from "@/lib/utils";
 import { MemberRole } from "@/types";
 import {
   Loader2,
@@ -94,7 +95,10 @@ export function MembersModal() {
         </div>
 
         <div className="space-y-2">
-          {members.map((member) => (
+          {members.map((member, index) => {
+            const isBottomItem = index >= members.length - 2 && members.length > 2;
+            
+            return (
             <div
               key={member._id}
               className="flex items-center gap-3 rounded-md p-2 hover:bg-discord-hover transition-colors"
@@ -135,7 +139,10 @@ export function MembersModal() {
                       {activeMenu === member._id && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setActiveMenu("")} />
-                          <div className="absolute right-0 top-8 z-50 w-48 rounded-md bg-discord-darker p-1.5 shadow-xl animate-scale-in">
+                          <div className={cn(
+                            "absolute right-0 z-50 w-48 rounded-md bg-discord-darker p-1.5 shadow-xl animate-scale-in",
+                            isBottomItem ? "bottom-8 origin-bottom-right" : "top-8 origin-top-right"
+                          )}>
                             <button
                               onClick={() =>
                                 handleRoleChange(
@@ -167,7 +174,7 @@ export function MembersModal() {
                 </div>
               )}
             </div>
-          ))}
+          )})}
         </div>
       </div>
     </div>
