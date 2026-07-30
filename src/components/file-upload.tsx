@@ -68,7 +68,19 @@ export function FileUpload({ onChange, value, endpoint }: FileUploadProps) {
       onUploadError={(error: Error) => {
         console.error(error);
       }}
-      className="w-full border-dashed border-2 border-discord-active bg-discord-darker hover:bg-[#18191c] transition-colors ut-label:text-discord-text ut-allowed-content:text-discord-muted ut-button:bg-discord-blurple ut-button:hover:bg-discord-blurple/80"
+      appearance={{
+        container:
+          "w-full border-2 border-dashed border-[#2b2d31] bg-[#1e1f22]/50 hover:bg-[#1e1f22] hover:border-campfire-blue/50 transition-all duration-300 rounded-xl p-8 cursor-pointer group outline-none",
+        label:
+          "text-white/90 font-medium text-base group-hover:text-campfire-blue transition-colors",
+        allowedContent: "text-discord-muted text-xs font-medium mt-2",
+        uploadIcon:
+          "text-discord-muted/80 w-12 h-12 mb-4 group-hover:text-campfire-blue transition-colors",
+      }}
+      className="ut-button:bg-campfire-blue ut-button:text-white ut-button:font-semibold ut-button:text-sm ut-button:hover:bg-campfire-blue/90 ut-button:px-5 ut-button:py-2.5 ut-button:rounded-md ut-button:shadow-md ut-button:shadow-campfire-blue/20"
+      content={{
+        label: endpoint === "messageFile" ? "Choose a file or drag & drop" : "Click to upload image",
+      }}
     />
   );
 }

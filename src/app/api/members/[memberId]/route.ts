@@ -15,9 +15,25 @@ export async function PATCH(
     }
 
     const { memberId } = await params;
-    const { role, serverId } = await req.json();
+    const { role, serverId, nickname } = await req.json();
 
     await dbConnect();
+
+    // If patching nickname, check if it's the current user
+    if (nickname !== undefined) {
+      const targetMember = await Member.findById(memberId);
+      if (!targetMember || targetMember.userId.toString() !== user._id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+      }
+      
+      const member = await Member.findByIdAndUpdate(
+        memberId,
+        { nickname: nickname === "" ? null : nickname },
+        { new: true }
+      ).populate("userId");
+      
+      return NextResponse.json(member);
+    }
 
     // Verify requesting user is admin
     const adminMember = await Member.findOne({

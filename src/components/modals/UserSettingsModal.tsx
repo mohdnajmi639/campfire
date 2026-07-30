@@ -67,7 +67,7 @@ export function UserSettingsModal() {
               endpoint="userImage"
               value={imageUrl}
               onChange={(url) => {
-                if (url) setImageUrl(url);
+                setImageUrl(url || "");
               }}
             />
           </div>

@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db";
 import Member from "@/models/Member";
 import Conversation from "@/models/Conversation";
 import User from "@/models/User";
+import Friendship from "@/models/Friendship";
 import { DMItem } from "./DMItem";
 import { Search } from "lucide-react";
 import { UserPanel } from "@/components/user-panel";
@@ -35,6 +36,16 @@ export async function DMSidebar() {
     .sort({ updatedAt: -1 })
     .lean();
 
+  // Fetch accepted friendships to enforce privacy
+  const friendships = await Friendship.find({
+    $or: [{ user1: user._id }, { user2: user._id }],
+    status: "accepted"
+  }).lean();
+
+  const friendIds = friendships.map(f => 
+    f.user1.toString() === user._id.toString() ? f.user2.toString() : f.user1.toString()
+  );
+
   return (
     <div className="flex h-full w-full flex-col bg-discord-channel text-primary">
       {/* Search Bar Placeholder */}
@@ -58,6 +69,9 @@ export async function DMSidebar() {
           const otherUser = otherMember.userId;
 
           if (!otherUser) return null;
+          
+          // Enforce privacy: only show friends
+          if (!friendIds.includes(otherUser._id.toString())) return null;
 
           return (
             <DMItem

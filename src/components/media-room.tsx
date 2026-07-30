@@ -162,6 +162,20 @@ function CustomParticipantTile(props: any) {
   const contextTrackRef = useMaybeTrackRefContext();
   const trackRef = props.trackRef || contextTrackRef;
 
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [volume, setVolume] = useState(1);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextMenu(null);
+      }
+    };
+    if (contextMenu) document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [contextMenu]);
+
   if (!trackRef) return <ParticipantTile {...props} />;
 
   const participant = trackRef.participant;
@@ -176,32 +190,75 @@ function CustomParticipantTile(props: any) {
     imageUrl = meta.image;
   } catch (e) {}
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!participant.isLocal) {
+      e.preventDefault();
+      setContextMenu({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setVolume(val);
+    
+    // Find audio track and adjust volume
+    participant.audioTrackPublications.forEach((pub: any) => {
+      if (pub.track && typeof pub.track.setVolume === 'function') {
+        pub.track.setVolume(val);
+      }
+    });
+  };
+
   return (
-    <ParticipantTile {...props} trackRef={trackRef} className={cn(props.className, "bg-[#111214]")}>
-      {isCameraOff && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
-          <div
-            className={cn(
-              "relative h-24 w-24 rounded-full flex items-center justify-center bg-discord-active text-discord-text text-3xl font-semibold overflow-hidden transition-all duration-200 pointer-events-auto",
-              isSpeaking
-                ? "ring-4 ring-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
-                : "ring-4 ring-discord-chat shadow-none"
-            )}
-          >
-            {imageUrl ? (
-              <Image
-                fill
-                src={imageUrl}
-                alt={participant.name || participant.identity}
-                className="object-cover"
-              />
-            ) : (
-              <span>{(participant.name || participant.identity || "?")[0].toUpperCase()}</span>
-            )}
+    <div onContextMenu={handleContextMenu} className="relative w-full h-full">
+      <ParticipantTile {...props} trackRef={trackRef} className={cn(props.className, "bg-[#111214]")}>
+        {isCameraOff && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-50">
+            <div
+              className={cn(
+                "relative h-24 w-24 rounded-full flex items-center justify-center bg-discord-active text-discord-text text-3xl font-semibold overflow-hidden transition-all duration-200 pointer-events-auto",
+                isSpeaking
+                  ? "ring-4 ring-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                  : "ring-4 ring-discord-chat shadow-none"
+              )}
+            >
+              {imageUrl ? (
+                <Image
+                  fill
+                  src={imageUrl}
+                  alt={participant.name || participant.identity}
+                  className="object-cover"
+                />
+              ) : (
+                <span>{(participant.name || participant.identity || "?")[0].toUpperCase()}</span>
+              )}
+            </div>
+          </div>
+        )}
+      </ParticipantTile>
+
+      {contextMenu && (
+        <div
+          ref={menuRef}
+          style={{ top: contextMenu.y, left: contextMenu.x }}
+          className="fixed z-50 min-w-[200px] rounded-md bg-[#111214] p-3 text-sm text-discord-text shadow-lg ring-1 ring-black/50"
+        >
+          <div className="mb-2 font-semibold text-white">Local Volume</div>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="w-full accent-campfire-blue"
+            />
+            <span className="text-xs w-8 text-right">{Math.round(volume * 100)}%</span>
           </div>
         </div>
       )}
-    </ParticipantTile>
+    </div>
   );
 }
 

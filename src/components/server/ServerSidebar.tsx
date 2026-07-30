@@ -13,6 +13,7 @@ import { ServerChannel } from "./ServerChannel";
 import { ServerMember } from "./ServerMember";
 import { VoiceConnectedBar } from "./VoiceConnectedBar";
 import { UserPanel } from "@/components/user-panel";
+import { ServerRealtimeUpdates } from "./ServerRealtimeUpdates";
 
 interface ServerSidebarProps {
   serverId: string;
@@ -61,6 +62,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
 
   return (
     <div className="flex h-full w-60 flex-col bg-discord-channel">
+      <ServerRealtimeUpdates serverId={serverId} />
       <ServerHeader
         server={{
           _id: server._id.toString(),
@@ -150,6 +152,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 member={{
                   _id: member._id.toString(),
                   role: member.role,
+                  nickname: member.nickname,
                   user: {
                     _id: member.userId?._id?.toString(),
                     name: member.userId?.name,
@@ -157,6 +160,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                   },
                 }}
                 serverId={serverId}
+                isCurrentUser={member.userId?._id?.toString() === user._id.toString()}
               />
             ))}
           </ServerSection>

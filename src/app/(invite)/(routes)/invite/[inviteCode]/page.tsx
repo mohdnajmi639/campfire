@@ -41,5 +41,12 @@ export default async function InvitePage({
   server.members.push(member._id);
   await server.save();
 
+  try {
+    const { pusherServer } = await import("@/lib/pusher");
+    await pusherServer.trigger(`server-${server._id.toString()}`, "member-update", {});
+  } catch (error) {
+    console.error("Pusher error:", error);
+  }
+
   return redirect(`/servers/${server._id}`);
 }

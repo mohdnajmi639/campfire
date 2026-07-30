@@ -184,11 +184,7 @@ export default function MePage() {
             ) : (
               <div className="space-y-1">
                 {pending.map((friend) => {
-                  // If the current user is NOT the one who initiated it, they can accept it
-                  const canAccept = friend.actionUserId !== friend.otherUser._id; // Wait, this logic needs to match the backend.
-                  // Wait! The backend sends the full other user. The friend.actionUserId is whoever initiated.
-                  // So if friend.actionUserId !== my user ID, I am the receiver.
-                  // Since we didn't pass my user ID to the frontend easily, let's just show Accept/Reject for all for now. The backend prevents accepting own requests.
+                  const isReceiver = friend.actionUserId.toString() === friend.otherUser._id.toString();
                   return (
                     <div key={friend._id} className="flex items-center justify-between p-3 rounded-md hover:bg-discord-dark/50 group border-t border-transparent hover:border-discord-darker transition-colors">
                       <div className="flex items-center gap-x-3">
@@ -199,12 +195,14 @@ export default function MePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-x-2">
-                        <button
-                          onClick={() => handleAction(friend._id, "accept")}
-                          className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-green hover:bg-discord-dark transition-colors"
-                        >
-                          <Check className="h-4 w-4" />
-                        </button>
+                        {isReceiver && (
+                          <button
+                            onClick={() => handleAction(friend._id, "accept")}
+                            className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-green hover:bg-discord-dark transition-colors"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleAction(friend._id, "reject")}
                           className="h-8 w-8 rounded-full bg-discord-darker flex items-center justify-center text-discord-muted hover:text-campfire-red hover:bg-discord-dark transition-colors"

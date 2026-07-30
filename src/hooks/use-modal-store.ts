@@ -13,7 +13,8 @@ export type ModalType =
   | "deleteChannel"
   | "messageFile"
   | "deleteMessage"
-  | "userSettings";
+  | "userSettings"
+  | "changeNickname";
 
  
 interface ModalData {
@@ -23,6 +24,7 @@ interface ModalData {
   apiUrl?: string;
   query?: Record<string, string>;
   user?: any;
+  member?: any;
 }
 
 interface ModalStore {
