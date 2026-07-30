@@ -26,7 +26,7 @@ export function FileUpload({ onChange, value, endpoint }: FileUploadProps) {
         />
         <button
           onClick={() => onChange("")}
-          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white shadow-md transition-transform hover:scale-110 opacity-0 group-hover:opacity-100"
+          className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-rose-500 text-white shadow-md transition-transform hover:scale-110"
           type="button"
         >
           <X className="h-4 w-4" />
