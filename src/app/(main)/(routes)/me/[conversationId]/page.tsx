@@ -73,6 +73,7 @@ export default async function DMPage({
           type="conversation"
           currentMemberId={currentMember._id.toString()}
           currentMemberRole={currentMember.role}
+          currentUserId={user._id.toString()}
           serverId={serverId}
         />
         <ChatInput

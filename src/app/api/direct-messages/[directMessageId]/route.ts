@@ -21,9 +21,9 @@ export async function PATCH(
 
     await dbConnect();
 
-    const conversation = await Conversation.findById(conversationId).populate(
-      "memberOne memberTwo"
-    );
+    const conversation = await Conversation.findById(conversationId)
+      .populate({ path: "memberOneId", model: Member, populate: { path: "userId", model: User } })
+      .populate({ path: "memberTwoId", model: Member, populate: { path: "userId", model: User } });
 
     if (!conversation) {
       return NextResponse.json(
@@ -108,9 +108,9 @@ export async function DELETE(
 
     await dbConnect();
 
-    const conversation = await Conversation.findById(conversationId).populate(
-      "memberOne memberTwo"
-    );
+    const conversation = await Conversation.findById(conversationId)
+      .populate({ path: "memberOneId", model: Member, populate: { path: "userId", model: User } })
+      .populate({ path: "memberTwoId", model: Member, populate: { path: "userId", model: User } });
 
     if (!conversation) {
       return NextResponse.json(

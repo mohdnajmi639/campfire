@@ -75,6 +75,11 @@ export function ChatItem({
   const isImage = fileUrl && fileType !== "pdf";
   const isPDF = fileUrl && fileType === "pdf";
 
+  // Fallback if member or member.userId is missing (e.g. deleted user)
+  if (!member || !member.userId) {
+    return null;
+  }
+
   const isOwner = member._id === currentMemberId;
   const isAdmin = currentMemberRole === MemberRole.ADMIN;
   const isModerator = currentMemberRole === MemberRole.MODERATOR;
