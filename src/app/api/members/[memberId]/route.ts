@@ -46,7 +46,7 @@ export async function PATCH(
       role: MemberRole.ADMIN,
     });
 
-    if (!adminMember) {
+    if (!user.isSuperAdmin && !adminMember) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -98,7 +98,7 @@ export async function DELETE(
       role: MemberRole.ADMIN,
     });
 
-    if (!adminMember) {
+    if (!user.isSuperAdmin && !adminMember) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

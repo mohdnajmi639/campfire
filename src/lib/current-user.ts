@@ -21,5 +21,10 @@ export async function currentUser() {
     name: user.name,
     email: user.email,
     image: user.image || "",
+    statusText: user.statusText || "",
+    isSuperAdmin: user.isSuperAdmin || false,
+    manualPresence: user.manualPresence || "online",
+    isClientIdle: user.isClientIdle || false,
+    lastSeen: user.lastSeen || new Date(),
   };
 }

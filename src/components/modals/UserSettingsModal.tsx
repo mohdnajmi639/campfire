@@ -14,6 +14,8 @@ export function UserSettingsModal() {
   const { isOpen, type, data, onClose } = useModal();
   const router = useRouter();
   const [imageUrl, setImageUrl] = useState("");
+  const [statusText, setStatusText] = useState("");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   const micThreshold = useSettingsStore((s) => s.micThreshold);
@@ -24,6 +26,8 @@ export function UserSettingsModal() {
   useEffect(() => {
     if (data.user) {
       setImageUrl(data.user.image || "");
+      setStatusText(data.user.statusText || "");
+      setIsSuperAdmin(data.user.isSuperAdmin || false);
     }
   }, [data.user, isModalOpen]);
 
@@ -39,7 +43,7 @@ export function UserSettingsModal() {
       await fetch("/api/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: imageUrl }),
+        body: JSON.stringify({ image: imageUrl, statusText, isSuperAdmin }),
       });
       router.refresh();
       onClose();
@@ -78,6 +82,42 @@ export function UserSettingsModal() {
             />
           </div>
         </div>
+
+        <div className="mb-6">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-discord-muted">
+            Custom Status
+          </label>
+          <div className="flex items-center rounded-sm bg-discord-darker p-1 transition-all focus-within:ring-1 focus-within:ring-campfire-blue">
+            <input
+              disabled={isLoading}
+              value={statusText}
+              onChange={(e) => setStatusText(e.target.value)}
+              placeholder="What's on your mind?"
+              maxLength={100}
+              className="flex-1 bg-transparent p-2 text-sm text-discord-text outline-none"
+            />
+          </div>
+        </div>
+
+        {data.user?.name === "blackmamba" && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between bg-black/20 p-4 rounded-md border border-discord-red/50">
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-discord-red uppercase">SAUCE IT UP</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="sr-only peer" 
+                  checked={isSuperAdmin}
+                  onChange={(e) => setIsSuperAdmin(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <div className="w-11 h-6 bg-discord-dark peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-discord-red"></div>
+              </label>
+            </div>
+          </div>
+        )}
 
         <div className="mb-6">
           <label className="mb-4 block text-xs font-bold uppercase tracking-wide text-discord-muted">
@@ -128,7 +168,7 @@ export function UserSettingsModal() {
             </button>
             <button
               onClick={onSave}
-              disabled={isLoading || imageUrl === (data.user?.image || "")}
+              disabled={isLoading || (imageUrl === (data.user?.image || "") && statusText === (data.user?.statusText || "") && isSuperAdmin === (data.user?.isSuperAdmin || false))}
               className="rounded-sm bg-campfire-blue px-4 py-2 text-sm font-medium text-white transition hover:bg-campfire-blue/80 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Save Changes

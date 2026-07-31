@@ -20,26 +20,22 @@ export async function PATCH(
     const { channelId } = await params;
     const { name, type, serverId } = await req.json();
 
-    if (name === "general") {
-      return NextResponse.json(
-        { error: "Cannot rename to 'general'" },
-        { status: 400 }
-      );
-    }
+
 
     await dbConnect();
 
     const member = await Member.findOne({ userId: user._id, serverId });
     if (
-      !member ||
+      !user.isSuperAdmin &&
+      (!member ||
       (member.role !== MemberRole.ADMIN &&
-        member.role !== MemberRole.MODERATOR)
+        member.role !== MemberRole.MODERATOR))
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     const channel = await Channel.findOneAndUpdate(
-      { _id: channelId, serverId, name: { $ne: "general" } },
+      { _id: channelId, serverId },
       { name, type },
       { new: true }
     );
@@ -88,17 +84,26 @@ export async function DELETE(
 
     const member = await Member.findOne({ userId: user._id, serverId });
     if (
-      !member ||
+      !user.isSuperAdmin &&
+      (!member ||
       (member.role !== MemberRole.ADMIN &&
-        member.role !== MemberRole.MODERATOR)
+        member.role !== MemberRole.MODERATOR))
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const channel = await Channel.findOne({
+    // Prevent deleting the default channel (the oldest one in the server)
+    const defaultChannel = await Channel.findOne({ serverId }).sort({ createdAt: 1 });
+    if (defaultChannel && defaultChannel._id.toString() === channelId) {
+      return NextResponse.json(
+        { error: "Cannot delete the default channel" },
+        { status: 400 }
+      );
+    }
+
+    const channel = await Channel.findOneAndDelete({
       _id: channelId,
       serverId,
-      name: { $ne: "general" },
     });
 
     if (!channel) {

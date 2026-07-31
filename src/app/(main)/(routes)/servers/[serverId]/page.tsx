@@ -19,14 +19,18 @@ export default async function ServerPage({
   const server = await Server.findById(serverId).populate("channels").lean();
   if (!server) return redirect("/");
 
-  // Redirect to the "general" text channel
-  const generalChannel = (server.channels as any[])?.find(
-    (c: any) => c.name === "general"
+  // Redirect to the "general" text channel if it exists, otherwise the first text channel
+  let targetChannel = (server.channels as any[])?.find(
+    (c: any) => c.name === "general" && c.type === "TEXT"
   );
+  
+  if (!targetChannel && server.channels && server.channels.length > 0) {
+    targetChannel = (server.channels as any[])?.find((c: any) => c.type === "TEXT") || server.channels[0];
+  }
 
-  if (generalChannel) {
+  if (targetChannel) {
     return redirect(
-      `/servers/${serverId}/channels/${generalChannel._id.toString()}`
+      `/servers/${serverId}/channels/${targetChannel._id.toString()}`
     );
   }
 

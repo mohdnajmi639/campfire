@@ -3,6 +3,18 @@ import { currentUser } from "@/lib/current-user";
 import User from "@/models/User";
 import dbConnect from "@/lib/db";
 
+export async function GET(req: Request) {
+  try {
+    await dbConnect();
+    const user = await currentUser();
+    if (!user) return new NextResponse("Unauthorized", { status: 401 });
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("[USER_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
+
 export async function PATCH(req: Request) {
   try {
     await dbConnect();
@@ -12,26 +24,38 @@ export async function PATCH(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { image } = await req.json();
+    const { image, statusText, isSuperAdmin, manualPresence } = await req.json();
 
-    if (image !== undefined) {
-      const oldUser = await User.findById(user._id);
+    const updates: any = {};
+    if (image !== undefined) updates.image = image;
+    if (statusText !== undefined) updates.statusText = statusText;
+    if (manualPresence !== undefined) updates.manualPresence = manualPresence;
+    
+    // Only allow blackmamba to change their super admin status
+    if (isSuperAdmin !== undefined && user.name === "blackmamba") {
+      updates.isSuperAdmin = isSuperAdmin;
+    }
 
-      // If they had an image, it was from uploadthing (ufs.sh), and it's changing
-      if (oldUser?.image && oldUser.image !== image && oldUser.image.includes("ufs.sh")) {
-        try {
-          const fileKey = oldUser.image.split("/").pop();
-          if (fileKey) {
-            const { UTApi } = await import("uploadthing/server");
-            const utapi = new UTApi();
-            await utapi.deleteFiles(fileKey);
+    if (Object.keys(updates).length > 0) {
+      if (image !== undefined) {
+        const oldUser = await User.findById(user._id);
+
+        // If they had an image, it was from uploadthing (ufs.sh), and it's changing
+        if (oldUser?.image && oldUser.image !== image && oldUser.image.includes("ufs.sh")) {
+          try {
+            const fileKey = oldUser.image.split("/").pop();
+            if (fileKey) {
+              const { UTApi } = await import("uploadthing/server");
+              const utapi = new UTApi();
+              await utapi.deleteFiles(fileKey);
+            }
+          } catch (error) {
+            console.error("Failed to delete old image:", error);
           }
-        } catch (error) {
-          console.error("Failed to delete old image:", error);
         }
       }
 
-      await User.findByIdAndUpdate(user._id, { image });
+      await User.findByIdAndUpdate(user._id, { $set: updates });
       
       try {
         const Member = (await import("@/models/Member")).default;

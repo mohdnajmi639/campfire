@@ -7,10 +7,12 @@ import { UserAvatar } from "@/components/user-avatar";
 interface DMItemProps {
   id: string;
   name: string;
-  imageUrl: string;
+  imageUrl?: string;
+  statusText?: string;
+  presence?: "online" | "idle" | "dnd" | "invisible" | "offline";
 }
 
-export function DMItem({ id, name, imageUrl }: DMItemProps) {
+export function DMItem({ id, name, imageUrl, statusText, presence }: DMItemProps) {
   const params = useParams();
   const router = useRouter();
 
@@ -31,16 +33,24 @@ export function DMItem({ id, name, imageUrl }: DMItemProps) {
       <UserAvatar
         src={imageUrl}
         name={name}
-        className="h-8 w-8"
+        presence={presence}
+        className="h-8 w-8 md:h-8 md:w-8"
       />
-      <p
-        className={cn(
-          "truncate text-sm font-semibold transition group-hover:text-discord-text",
-          isActive ? "text-discord-text" : "text-discord-muted"
+      <div className="flex flex-col text-left overflow-hidden">
+        <p
+          className={cn(
+            "truncate text-sm font-semibold transition group-hover:text-discord-text",
+            isActive ? "text-discord-text" : "text-discord-muted"
+          )}
+        >
+          {name}
+        </p>
+        {statusText && (
+          <p className="truncate text-[11px] text-discord-muted -mt-0.5">
+            - {statusText}
+          </p>
         )}
-      >
-        {name}
-      </p>
+      </div>
     </button>
   );
 }

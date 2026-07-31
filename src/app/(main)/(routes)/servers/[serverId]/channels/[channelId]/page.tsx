@@ -49,7 +49,8 @@ export default async function ChannelPage({
             paramValue={channelId}
             type="channel"
             currentMemberId={member._id.toString()}
-            currentMemberRole={member.role}
+            currentMemberRole={user.isSuperAdmin ? "ADMIN" : member.role}
+            currentUserId={user._id.toString()}
             serverId={serverId}
           />
           <ChatInput

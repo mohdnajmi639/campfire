@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
-import { Edit, FileIcon, Trash, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Edit, FileIcon, Trash, ShieldAlert, ShieldCheck, Reply, CornerUpLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/user-avatar";
 import { ActionTooltip } from "@/components/action-tooltip";
 import { MemberRole } from "@/types";
-
 import { useModal } from "@/hooks/use-modal-store";
+import { useReplyStore } from "@/hooks/use-reply-store";
 
 interface ChatItemProps {
   id: string;
@@ -32,6 +32,10 @@ interface ChatItemProps {
   isUpdated: boolean;
   serverId: string;
   channelId: string;
+  type: "channel" | "conversation";
+  replyTo?: any;
+  mentions?: any[];
+  currentUserId?: string;
 }
 
 const roleIconMap: Record<string, React.ReactNode> = {
@@ -54,8 +58,13 @@ export function ChatItem({
   isUpdated,
   serverId,
   channelId,
+  type,
+  replyTo,
+  mentions = [],
+  currentUserId,
 }: ChatItemProps) {
   const { onOpen } = useModal();
+  const { setReply } = useReplyStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [isLoading, setIsLoading] = useState(false);
@@ -67,7 +76,9 @@ export function ChatItem({
   const isOwner = member._id === currentMemberId;
   const isAdmin = currentMemberRole === MemberRole.ADMIN;
   const isModerator = currentMemberRole === MemberRole.MODERATOR;
-  const canDelete = !deleted && (isOwner || isAdmin || isModerator);
+  
+  // Only owners can delete in DMs. In channels, admins and mods can delete.
+  const canDelete = isOwner || (type === "channel" && (isAdmin || isModerator));
   const canEdit = !deleted && isOwner && !fileUrl;
 
   const handleEdit = async () => {
@@ -78,10 +89,16 @@ export function ChatItem({
 
     setIsLoading(true);
     try {
-      await fetch(`/api/messages/${id}`, {
+      const endpoint = type === "channel" ? `/api/messages/${id}` : `/api/direct-messages/${id}`;
+      await fetch(endpoint, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editContent, serverId, channelId }),
+        body: JSON.stringify({ 
+          content: editContent, 
+          serverId: type === "channel" ? serverId : undefined, 
+          channelId: type === "channel" ? channelId : undefined,
+          conversationId: type === "conversation" ? channelId : undefined
+        }),
       });
       setIsEditing(false);
     } catch (error) {
@@ -91,129 +108,212 @@ export function ChatItem({
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      await fetch(
-        `/api/messages/${id}?serverId=${serverId}&channelId=${channelId}`,
-        { method: "DELETE" }
-      );
-    } catch (error) {
-      console.error("Failed to delete message:", error);
+  const openDeleteModal = () => {
+    const apiUrl = type === "channel" ? `/api/messages/${id}` : `/api/direct-messages/${id}`;
+    const query = type === "channel" 
+      ? { serverId, channelId } 
+      : { conversationId: channelId };
+      
+    onOpen("deleteMessage", { apiUrl, query, isDeleted: deleted });
+  };
+
+  const scrollToReply = () => {
+    if (!replyTo?._id) return;
+    const element = document.getElementById(`message-${replyTo._id}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("bg-discord-active/50", "transition-colors", "duration-500");
+      setTimeout(() => {
+        element.classList.remove("bg-discord-active/50");
+      }, 2000);
     }
   };
 
-  return (
-    <div className="group relative flex items-start gap-x-3 px-4 py-1.5 chat-item-hover transition-colors">
-      {/* Avatar */}
-      <UserAvatar
-        src={member.userId?.image}
-        name={member.userId?.name}
-        className="mt-0.5 h-9 w-9 cursor-pointer"
-      />
+  const isMentioned = currentUserId && mentions.some((m) => (m._id || m).toString() === currentUserId.toString());
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-x-2">
-          <span className="text-sm font-semibold text-discord-text hover:underline cursor-pointer">
-            {member.nickname || member.userId?.name}
+  const renderContent = () => {
+    if (!content) return null;
+    // Split by @username based on mentions array
+    let highlightedContent: React.ReactNode[] = [content];
+    
+    mentions.forEach((mention) => {
+      const name = mention.name;
+      if (!name) return;
+      const mentionStr = `@${name}`;
+      
+      const newContent: React.ReactNode[] = [];
+      highlightedContent.forEach((part) => {
+        if (typeof part === "string") {
+          const split = part.split(mentionStr);
+          split.forEach((s, i) => {
+            newContent.push(s);
+            if (i < split.length - 1) {
+              newContent.push(
+                <span key={`${name}-${i}`} className="bg-campfire-blue/20 text-campfire-blue font-semibold px-1 rounded-sm">
+                  {mentionStr}
+                </span>
+              );
+            }
+          });
+        } else {
+          newContent.push(part);
+        }
+      });
+      highlightedContent = newContent;
+    });
+
+    return <>{highlightedContent}</>;
+  };
+
+  return (
+    <div id={`message-${id}`} className={cn(
+      "group relative flex flex-col px-4 py-1.5 chat-item-hover transition-colors duration-500",
+      isMentioned && "bg-yellow-500/10 border-l-4 border-yellow-500 hover:bg-yellow-500/20"
+    )}>
+      {replyTo && (
+        <div 
+          onClick={scrollToReply}
+          className="flex items-center gap-x-2 pl-[42px] mb-1 text-sm text-discord-muted relative group/reply cursor-pointer hover:text-discord-text transition-colors"
+        >
+          {/* The curved reply line */}
+          <div className="absolute left-[21px] top-1/2 -mt-[1px] w-[20px] h-[14px] border-l-2 border-t-2 border-discord-muted/50 rounded-tl-md group-hover/reply:border-discord-text/50 transition-colors" />
+          
+          <Image 
+            src={replyTo.memberId?.userId?.image || "/user.png"} 
+            alt="Reply" 
+            width={16} 
+            height={16} 
+            className="rounded-full relative z-10"
+          />
+          <span className="font-semibold text-discord-text text-xs hover:underline">
+            {replyTo.memberId?.nickname || replyTo.memberId?.userId?.name || "Unknown User"}
           </span>
-          {roleIconMap[member.role] && (
-            <ActionTooltip label={member.role} side="top">
-              <span className="text-xs flex items-center justify-center">{roleIconMap[member.role]}</span>
-            </ActionTooltip>
-          )}
-          <span className="text-xs text-discord-muted">
-            {format(new Date(timestamp), DATE_FORMAT)}
+          <span className="text-xs truncate max-w-[400px]">
+            {replyTo.content || "Attachment"}
           </span>
         </div>
+      )}
 
-        {/* Image */}
-        {isImage && (
-          <button
-            onClick={() => onOpen("imageViewer", { imageUrl: fileUrl })}
-            className="relative mt-2 block h-48 w-48 overflow-hidden rounded-md border border-discord-active cursor-zoom-in"
-          >
-            <Image
-              src={fileUrl!}
-              alt={content}
-              fill
-              className="object-cover"
-            />
-          </button>
-        )}
+      <div className="flex items-start gap-x-3">
+        {/* Avatar */}
+        <UserAvatar
+          src={member.userId?.image}
+          name={member.userId?.name}
+          className="mt-0.5 h-9 w-9 cursor-pointer z-10 bg-discord-channel"
+        />
 
-        {/* PDF */}
-        {isPDF && (
-          <div className="relative mt-2 flex items-center gap-2 rounded-md bg-discord-darker p-2">
-            <FileIcon className="h-10 w-10 fill-campfire-orange/10 stroke-campfire-orange" />
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-campfire-orange hover:underline"
-            >
-              PDF File
-            </a>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-x-2">
+            <span className="text-sm font-semibold text-discord-text hover:underline cursor-pointer">
+              {member.nickname || member.userId?.name}
+            </span>
+            {roleIconMap[member.role] && (
+              <ActionTooltip label={member.role} side="top">
+                <span className="text-xs flex items-center justify-center">{roleIconMap[member.role]}</span>
+              </ActionTooltip>
+            )}
+            <span className="text-xs text-discord-muted">
+              {format(new Date(timestamp), DATE_FORMAT)}
+            </span>
           </div>
-        )}
 
-        {/* Text content */}
-        {!fileUrl && !isEditing && (
-          <p
-            className={cn(
-              "text-sm text-discord-text",
-              deleted && "italic text-discord-muted text-xs mt-1"
-            )}
-          >
-            {content}
-            {isUpdated && !deleted && (
-              <span className="ml-1 text-[10px] text-discord-muted">
-                (edited)
-              </span>
-            )}
-          </p>
-        )}
+          {/* Image */}
+          {isImage && (
+            <button
+              onClick={() => onOpen("imageViewer", { imageUrl: fileUrl })}
+              className="relative mt-2 block h-48 w-48 overflow-hidden rounded-md border border-discord-active cursor-zoom-in"
+            >
+              <Image
+                src={fileUrl!}
+                alt={content}
+                fill
+                className="object-cover"
+              />
+            </button>
+          )}
 
-        {/* Edit form */}
-        {!fileUrl && isEditing && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleEdit();
-            }}
-            className="mt-1 flex items-center gap-2"
-          >
-            <input
-              disabled={isLoading}
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              className="flex-1 rounded-sm bg-discord-input px-2.5 py-1.5 text-sm text-discord-text outline-none focus:ring-1 focus:ring-campfire-orange/50"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Escape") setIsEditing(false);
+          {/* PDF */}
+          {isPDF && (
+            <div className="relative mt-2 flex items-center gap-2 rounded-md bg-discord-darker p-2">
+              <FileIcon className="h-10 w-10 fill-campfire-orange/10 stroke-campfire-orange" />
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-campfire-orange hover:underline"
+              >
+                PDF File
+              </a>
+            </div>
+          )}
+
+          {/* Text content */}
+          {!fileUrl && !isEditing && (
+            <p
+              className={cn(
+                "text-sm text-discord-text",
+                deleted && "italic text-discord-muted text-xs mt-1"
+              )}
+            >
+              {renderContent()}
+              {isUpdated && !deleted && (
+                <span className="ml-1 text-[10px] text-discord-muted">
+                  (edited)
+                </span>
+              )}
+            </p>
+          )}
+
+          {/* Edit form */}
+          {!fileUrl && isEditing && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleEdit();
               }}
-            />
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="text-xs text-campfire-orange hover:underline"
+              className="mt-1 flex items-center gap-2"
             >
-              Save
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              className="text-xs text-discord-muted hover:underline"
-            >
-              Cancel
-            </button>
-          </form>
-        )}
-      </div>
+              <input
+                disabled={isLoading}
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                className="flex-1 rounded-sm bg-discord-input px-2.5 py-1.5 text-sm text-discord-text outline-none focus:ring-1 focus:ring-campfire-orange/50"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setIsEditing(false);
+                }}
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="text-xs text-campfire-orange hover:underline"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditing(false)}
+                className="text-xs text-discord-muted hover:underline"
+              >
+                Cancel
+              </button>
+            </form>
+          )}
+        </div>
 
-      {/* Action buttons */}
-      {!deleted && (
-        <div className="absolute -top-2 right-4 hidden items-center gap-1 rounded-md border border-discord-active bg-discord-channel p-0.5 shadow-sm group-hover:flex animate-fade-in">
+        {/* Action buttons */}
+        <div className="absolute -top-2 right-4 hidden items-center gap-1 rounded-md border border-discord-active bg-discord-channel p-0.5 shadow-sm group-hover:flex animate-fade-in z-20">
+          {!deleted && (
+            <ActionTooltip label="Reply" side="top">
+              <button
+                onClick={() => setReply({ messageId: id, memberId: member._id, name: member.nickname || member.userId?.name || "Unknown" })}
+                className="p-1 text-discord-muted hover:text-discord-text transition-colors"
+              >
+                <CornerUpLeft className="h-4 w-4" />
+              </button>
+            </ActionTooltip>
+          )}
           {canEdit && (
             <ActionTooltip label="Edit" side="top">
               <button
@@ -230,7 +330,7 @@ export function ChatItem({
           {canDelete && (
             <ActionTooltip label="Delete" side="top">
               <button
-                onClick={handleDelete}
+                onClick={openDeleteModal}
                 className="p-1 text-discord-muted hover:text-discord-red transition-colors"
               >
                 <Trash className="h-4 w-4" />
@@ -238,7 +338,7 @@ export function ChatItem({
             </ActionTooltip>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

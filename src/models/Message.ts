@@ -6,6 +6,8 @@ export interface IMessage extends Document {
   fileUrl?: string;
   memberId: Types.ObjectId;
   channelId: Types.ObjectId;
+  replyToId?: Types.ObjectId;
+  mentions: Types.ObjectId[];
   deleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -17,6 +19,8 @@ const MessageSchema = new Schema<IMessage>(
     fileUrl: { type: String, default: "" },
     memberId: { type: Schema.Types.ObjectId, ref: "Member", required: true },
     channelId: { type: Schema.Types.ObjectId, ref: "Channel", required: true },
+    replyToId: { type: Schema.Types.ObjectId, ref: "Message", required: false },
+    mentions: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
     deleted: { type: Boolean, default: false },
   },
   { timestamps: true }

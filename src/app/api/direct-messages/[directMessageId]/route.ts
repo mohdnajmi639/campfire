@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@/lib/current-user";
 import dbConnect from "@/lib/db";
-import Message from "@/models/Message";
-import Member from "@/models/Member";
-import { MemberRole } from "@/types";
+import DirectMessage from "@/models/DirectMessage";
+import Conversation from "@/models/Conversation";
 import User from "@/models/User";
 import { pusherServer } from "@/lib/pusher";
 
 export async function PATCH(
   req: Request,
-  { params }: { params: Promise<{ messageId: string }> }
+  { params }: { params: Promise<{ directMessageId: string }> }
 ) {
   try {
     const user = await currentUser();
@@ -17,17 +16,34 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { messageId } = await params;
-    const { content, serverId, channelId } = await req.json();
+    const { directMessageId } = await params;
+    const { content, conversationId } = await req.json();
 
     await dbConnect();
 
-    const member = await Member.findOne({ userId: user._id, serverId });
+    const conversation = await Conversation.findById(conversationId).populate(
+      "memberOne memberTwo"
+    );
+
+    if (!conversation) {
+      return NextResponse.json(
+        { error: "Conversation not found" },
+        { status: 404 }
+      );
+    }
+
+    const member =
+      conversation.memberOne.userId.toString() === user._id.toString()
+        ? conversation.memberOne
+        : conversation.memberTwo.userId.toString() === user._id.toString()
+        ? conversation.memberTwo
+        : null;
+
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 403 });
     }
 
-    const message = await Message.findById(messageId);
+    const message = await DirectMessage.findById(directMessageId);
     if (!message || message.deleted) {
       return NextResponse.json(
         { error: "Message not found" },
@@ -35,13 +51,12 @@ export async function PATCH(
       );
     }
 
-    // Only the message author can edit
     if (message.memberId.toString() !== member._id.toString()) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const updatedMessage = await Message.findByIdAndUpdate(
-      messageId,
+    const updatedMessage = await DirectMessage.findByIdAndUpdate(
+      directMessageId,
       { content },
       { new: true }
     )
@@ -58,13 +73,12 @@ export async function PATCH(
       })
       .lean();
 
-    // Broadcast update
-    const channelKey = `chat-${channelId}`;
+    const channelKey = `chat-${conversationId}`;
     await pusherServer.trigger(channelKey, "message:update", updatedMessage);
 
     return NextResponse.json(updatedMessage);
   } catch (error) {
-    console.error("[MESSAGE_PATCH]", error);
+    console.error("[DIRECT_MESSAGE_PATCH]", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -74,7 +88,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ messageId: string }> }
+  { params }: { params: Promise<{ directMessageId: string }> }
 ) {
   try {
     const user = await currentUser();
@@ -82,25 +96,41 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { messageId } = await params;
-    const serverId = req.nextUrl.searchParams.get("serverId");
-    const channelId = req.nextUrl.searchParams.get("channelId");
+    const { directMessageId } = await params;
+    const conversationId = req.nextUrl.searchParams.get("conversationId");
 
-    if (!serverId || !channelId) {
+    if (!conversationId) {
       return NextResponse.json(
-        { error: "Server and channel IDs required" },
+        { error: "Conversation ID required" },
         { status: 400 }
       );
     }
 
     await dbConnect();
 
-    const member = await Member.findOne({ userId: user._id, serverId });
+    const conversation = await Conversation.findById(conversationId).populate(
+      "memberOne memberTwo"
+    );
+
+    if (!conversation) {
+      return NextResponse.json(
+        { error: "Conversation not found" },
+        { status: 404 }
+      );
+    }
+
+    const member =
+      conversation.memberOne.userId.toString() === user._id.toString()
+        ? conversation.memberOne
+        : conversation.memberTwo.userId.toString() === user._id.toString()
+        ? conversation.memberTwo
+        : null;
+
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 403 });
     }
 
-    const message = await Message.findById(messageId);
+    const message = await DirectMessage.findById(directMessageId);
     if (!message) {
       return NextResponse.json(
         { error: "Message not found" },
@@ -118,24 +148,21 @@ export async function DELETE(
     }
 
     const isOwner = message.memberId.toString() === member._id.toString();
-    const isAdmin = member.role === MemberRole.ADMIN;
-    const isModerator = member.role === MemberRole.MODERATOR;
 
-    if (!user.isSuperAdmin && !isOwner && !isAdmin && !isModerator) {
+    if (!isOwner) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const channelKey = `chat-${channelId}`;
+    const channelKey = `chat-${conversationId}`;
 
     if (hardDelete) {
-      await Message.findByIdAndDelete(messageId);
-      await pusherServer.trigger(channelKey, "message:delete", messageId);
+      await DirectMessage.findByIdAndDelete(directMessageId);
+      await pusherServer.trigger(channelKey, "message:delete", directMessageId);
       return NextResponse.json({ success: true });
     }
 
-    // Soft delete
-    const updatedMessage = await Message.findByIdAndUpdate(
-      messageId,
+    const updatedMessage = await DirectMessage.findByIdAndUpdate(
+      directMessageId,
       {
         content: "This message has been deleted.",
         fileUrl: "",
@@ -156,12 +183,11 @@ export async function DELETE(
       })
       .lean();
 
-    // Broadcast deletion
     await pusherServer.trigger(channelKey, "message:update", updatedMessage);
 
     return NextResponse.json(updatedMessage);
   } catch (error) {
-    console.error("[MESSAGE_DELETE]", error);
+    console.error("[DIRECT_MESSAGE_DELETE]", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

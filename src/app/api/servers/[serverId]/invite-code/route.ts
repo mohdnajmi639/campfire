@@ -18,8 +18,12 @@ export async function PATCH(
 
     await dbConnect();
 
+    const query = user.isSuperAdmin
+      ? { _id: serverId }
+      : { _id: serverId, userId: user._id };
+
     const server = await Server.findOneAndUpdate(
-      { _id: serverId, userId: user._id },
+      query,
       { inviteCode: uuidv4() },
       { new: true }
     );

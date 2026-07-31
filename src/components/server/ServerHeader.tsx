@@ -23,9 +23,10 @@ interface ServerHeaderProps {
     userId: string;
   };
   role?: string;
+  isSuperAdmin?: boolean;
 }
 
-export function ServerHeader({ server, role }: ServerHeaderProps) {
+export function ServerHeader({ server, role, isSuperAdmin }: ServerHeaderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { onOpen } = useModal();
 
@@ -82,7 +83,7 @@ export function ServerHeader({ server, role }: ServerHeaderProps) {
             {isAdmin && (
               <button
                 onClick={() => {
-                  onOpen("members", { server });
+                  onOpen("members", { server, user: { isSuperAdmin } });
                   setIsOpen(false);
                 }}
                 className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-discord-muted hover:bg-campfire-orange hover:text-white transition-colors"

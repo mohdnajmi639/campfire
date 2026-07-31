@@ -21,8 +21,12 @@ export async function PATCH(
 
     await dbConnect();
 
+    const query = user.isSuperAdmin 
+      ? { _id: serverId } 
+      : { _id: serverId, userId: user._id };
+      
     const server = await Server.findOneAndUpdate(
-      { _id: serverId, userId: user._id },
+      query,
       { name, imageUrl },
       { new: true }
     );
@@ -58,7 +62,11 @@ export async function DELETE(
 
     await dbConnect();
 
-    const server = await Server.findOne({ _id: serverId, userId: user._id });
+    const query = user.isSuperAdmin
+      ? { _id: serverId }
+      : { _id: serverId, userId: user._id };
+
+    const server = await Server.findOne(query);
     if (!server) {
       return NextResponse.json({ error: "Server not found" }, { status: 404 });
     }

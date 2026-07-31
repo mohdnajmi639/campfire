@@ -14,13 +14,15 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import { ActionTooltip } from "@/components/action-tooltip";
+import { getPresenceStatus } from "@/lib/presence";
 
 export function MembersModal() {
   const { isOpen, type, data, onClose } = useModal();
   const router = useRouter();
   const [members, setMembers] = useState<any[]>([]);
   const [loadingId, setLoadingId] = useState("");
-  const [activeMenu, setActiveMenu] = useState("");
+  const [activeMenu, setActiveMenu] = useState<{ id: string; x: number; y: number; isBottom: boolean } | null>(null);
 
   const isModalOpen = isOpen && type === "members";
 
@@ -45,7 +47,7 @@ export function MembersModal() {
       setMembers((prev) =>
         prev.map((m) => (m._id === memberId ? { ...m, role } : m))
       );
-      setActiveMenu("");
+      setActiveMenu(null);
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -62,7 +64,7 @@ export function MembersModal() {
         { method: "DELETE" }
       );
       setMembers((prev) => prev.filter((m) => m._id !== memberId));
-      setActiveMenu("");
+      setActiveMenu(null);
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -72,9 +74,9 @@ export function MembersModal() {
   };
 
   const roleIcons: Record<string, React.ReactNode> = {
-    [MemberRole.ADMIN]: <ShieldAlert className="h-4 w-4 text-discord-red" />,
-    [MemberRole.MODERATOR]: <ShieldCheck className="h-4 w-4 text-campfire-orange" />,
-    [MemberRole.GUEST]: <Shield className="h-4 w-4 text-discord-muted" />,
+    [MemberRole.ADMIN]: <ActionTooltip label="ADMIN" side="top"><ShieldAlert className="h-4 w-4 text-discord-red" /></ActionTooltip>,
+    [MemberRole.MODERATOR]: <ActionTooltip label="MODERATOR" side="top"><ShieldCheck className="h-4 w-4 text-campfire-orange" /></ActionTooltip>,
+    [MemberRole.GUEST]: <ActionTooltip label="MEMBER" side="top"><Shield className="h-4 w-4 text-discord-muted" /></ActionTooltip>,
   };
 
   if (!isModalOpen) return null;
@@ -106,6 +108,7 @@ export function MembersModal() {
               <UserAvatar
                 src={member.userId?.image}
                 name={member.userId?.name}
+                presence={getPresenceStatus(member.userId || {}, data.user?.isSuperAdmin)}
                 className="h-9 w-9"
               />
               <div className="flex-1">
@@ -115,9 +118,6 @@ export function MembersModal() {
                   </span>
                   {roleIcons[member.role]}
                 </div>
-                <p className="text-xs text-discord-muted">
-                  {member.userId?.email}
-                </p>
               </div>
 
               {member.role !== MemberRole.ADMIN && (
@@ -125,58 +125,84 @@ export function MembersModal() {
                   {loadingId === member._id ? (
                     <Loader2 className="h-4 w-4 animate-spin text-discord-muted" />
                   ) : (
-                    <>
-                      <button
-                        onClick={() =>
-                          setActiveMenu(
-                            activeMenu === member._id ? "" : member._id
-                          )
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (activeMenu?.id === member._id) {
+                          setActiveMenu(null);
+                        } else {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          // position menu below the button, aligned to the right
+                          setActiveMenu({
+                            id: member._id,
+                            x: rect.right - 192, // 192px = w-48
+                            y: rect.bottom + 8,
+                            isBottom: index >= members.length - 2 && members.length > 2,
+                          });
                         }
-                        className="rounded-sm p-1 text-discord-muted hover:text-discord-text transition-colors"
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </button>
-                      {activeMenu === member._id && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setActiveMenu("")} />
-                          <div className={cn(
-                            "absolute right-0 z-50 w-48 rounded-md bg-discord-darker p-1.5 shadow-xl animate-scale-in",
-                            isBottomItem ? "bottom-8 origin-bottom-right" : "top-8 origin-top-right"
-                          )}>
-                            <button
-                              onClick={() =>
-                                handleRoleChange(
-                                  member._id,
-                                  member.role === MemberRole.MODERATOR
-                                    ? MemberRole.GUEST
-                                    : MemberRole.MODERATOR
-                                )
-                              }
-                              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-discord-muted hover:bg-campfire-orange hover:text-white transition-colors"
-                            >
-                              <ShieldCheck className="h-4 w-4" />
-                              {member.role === MemberRole.MODERATOR
-                                ? "Remove Moderator"
-                                : "Make Moderator"}
-                            </button>
-                            <button
-                              onClick={() => handleKick(member._id)}
-                              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-discord-red hover:bg-discord-red hover:text-white transition-colors"
-                            >
-                              <X className="h-4 w-4" />
-                              Kick Member
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </>
+                      }}
+                      className="rounded-sm p-1 text-discord-muted hover:text-discord-text transition-colors"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </button>
                   )}
                 </div>
               )}
             </div>
-          )})}
+          );
+        })}
         </div>
       </div>
+      
+      {/* Render the active menu outside the scrollable container using fixed positioning */}
+      {activeMenu && (
+        <>
+          <div className="fixed inset-0 z-[60]" onClick={() => setActiveMenu(null)} />
+          <div
+            className={cn(
+              "fixed z-[70] w-48 rounded-md bg-discord-darker p-1.5 shadow-xl animate-scale-in pointer-events-auto",
+              activeMenu.isBottom ? "origin-bottom-right" : "origin-top-right"
+            )}
+            style={{ 
+              left: activeMenu.x, 
+              top: activeMenu.isBottom ? undefined : activeMenu.y,
+              bottom: activeMenu.isBottom ? window.innerHeight - activeMenu.y + 32 : undefined 
+            }}
+          >
+            {(() => {
+              const member = members.find((m) => m._id === activeMenu.id);
+              if (!member) return null;
+              return (
+                <>
+                  <button
+                    onClick={() =>
+                      handleRoleChange(
+                        member._id,
+                        member.role === MemberRole.MODERATOR
+                          ? MemberRole.GUEST
+                          : MemberRole.MODERATOR
+                      )
+                    }
+                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-discord-muted hover:bg-campfire-orange hover:text-white transition-colors"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    {member.role === MemberRole.MODERATOR
+                      ? "Remove Moderator"
+                      : "Make Moderator"}
+                  </button>
+                  <button
+                    onClick={() => handleKick(member._id)}
+                    className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-discord-red hover:bg-discord-red hover:text-white transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                    Kick Member
+                  </button>
+                </>
+              );
+            })()}
+          </div>
+        </>
+      )}
     </div>
   );
 }

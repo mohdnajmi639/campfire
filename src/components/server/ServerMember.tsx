@@ -8,6 +8,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { Shield, ShieldCheck, ShieldAlert, MoreVertical, MessageSquare, UserPlus, X, Loader2 } from "lucide-react";
 import { useModal } from "@/hooks/use-modal-store";
 import { ActionTooltip } from "@/components/action-tooltip";
+import { getPresenceStatus } from "@/lib/presence";
 
 interface ServerMemberProps {
   member: {
@@ -18,12 +19,18 @@ interface ServerMemberProps {
       _id: string;
       name: string;
       image?: string;
+      statusText?: string;
+      isSuperAdmin?: boolean;
+      manualPresence?: "online" | "idle" | "dnd" | "invisible";
+      isClientIdle?: boolean;
+      lastSeen?: Date;
     };
   };
   serverId: string;
   isCurrentUser?: boolean;
   currentUserRole?: string;
   isFriend?: boolean;
+  isViewerSuperAdmin?: boolean;
 }
 
 const roleIconMap = {
@@ -34,7 +41,14 @@ const roleIconMap = {
   [MemberRole.ADMIN]: <ShieldAlert className="h-4 w-4 text-discord-red" />,
 };
 
-export function ServerMember({ member, serverId, isCurrentUser, currentUserRole, isFriend }: ServerMemberProps) {
+export const ServerMember = ({
+  member,
+  serverId,
+  isCurrentUser,
+  currentUserRole,
+  isFriend,
+  isViewerSuperAdmin,
+}: ServerMemberProps) => {
   const params = useParams();
   const router = useRouter();
   const { onOpen } = useModal();
@@ -105,11 +119,6 @@ export function ServerMember({ member, serverId, isCurrentUser, currentUserRole,
   return (
     <>
       <button
-        onClick={() => {
-          if (isCurrentUser) {
-            onOpen("changeNickname", { member, server: { _id: serverId } });
-          }
-        }}
         onContextMenu={handleContextMenu}
         className={cn(
           "group flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors relative",
@@ -121,14 +130,24 @@ export function ServerMember({ member, serverId, isCurrentUser, currentUserRole,
         <UserAvatar
           src={member.user.image}
           name={member.nickname || member.user.name}
+          presence={getPresenceStatus(member.user, isViewerSuperAdmin)}
           className="h-7 w-7 shrink-0"
         />
-        <span className="truncate">{member.nickname || member.user.name}</span>
-        {icon && (
-          <ActionTooltip label={member.role} side="top">
-            <span className={cn("flex items-center justify-center", isCurrentUser ? "ml-auto" : "ml-auto group-hover:hidden")}>{icon}</span>
-          </ActionTooltip>
-        )}
+        <div className="flex flex-col text-left flex-1 min-w-0">
+          <div className="flex items-center gap-x-1">
+            <span className="truncate max-w-[100px]">{member.nickname || member.user.name}</span>
+            {icon && (
+              <ActionTooltip label={member.role} side="top">
+                <span className="flex items-center justify-center shrink-0">{icon}</span>
+              </ActionTooltip>
+            )}
+          </div>
+          {member.user.statusText && (
+            <span className="text-[11px] text-discord-muted truncate -mt-0.5 max-w-[130px]">
+              - {member.user.statusText}
+            </span>
+          )}
+        </div>
         {!isCurrentUser && (
           <div 
             onClick={(e) => {
@@ -149,15 +168,26 @@ export function ServerMember({ member, serverId, isCurrentUser, currentUserRole,
           className="fixed z-50 min-w-[180px] rounded-md bg-[#111214] p-2 text-sm text-discord-text shadow-lg ring-1 ring-black/50 space-y-1"
         >
           {isCurrentUser ? (
-            <button
-              onClick={() => {
-                setContextMenu(null);
-                onOpen("changeNickname", { member, server: { _id: serverId } });
-              }}
-              className="w-full rounded-sm px-2 py-1.5 text-left hover:bg-discord-blurple hover:text-white"
-            >
-              Change Nickname
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  setContextMenu(null);
+                  onOpen("changeNickname", { member, server: { _id: serverId } });
+                }}
+                className="w-full rounded-sm px-2 py-1.5 text-left hover:bg-discord-blurple hover:text-white"
+              >
+                Change Nickname
+              </button>
+              <button
+                onClick={() => {
+                  setContextMenu(null);
+                  onOpen("userSettings", { user: member.user });
+                }}
+                className="w-full rounded-sm px-2 py-1.5 text-left hover:bg-discord-blurple hover:text-white"
+              >
+                Change Status
+              </button>
+            </>
           ) : (
             <>
               {!isFriend && (

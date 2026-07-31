@@ -6,6 +6,8 @@ export interface IDirectMessage extends Document {
   fileUrl?: string;
   memberId: Types.ObjectId;
   conversationId: Types.ObjectId;
+  replyToId?: Types.ObjectId;
+  mentions: Types.ObjectId[];
   deleted: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -21,6 +23,8 @@ const DirectMessageSchema = new Schema<IDirectMessage>(
       ref: "Conversation",
       required: true,
     },
+    replyToId: { type: Schema.Types.ObjectId, ref: "DirectMessage", required: false },
+    mentions: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
     deleted: { type: Boolean, default: false },
   },
   { timestamps: true }

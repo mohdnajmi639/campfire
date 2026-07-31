@@ -41,6 +41,13 @@ export async function GET(req: NextRequest) {
         path: "memberId",
         populate: { path: "userId", model: User },
       })
+      .populate({
+        path: "replyToId",
+        populate: {
+          path: "memberId",
+          populate: { path: "userId", model: User },
+        },
+      })
       .lean();
 
     let nextCursor = null;
@@ -65,7 +72,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, fileUrl, conversationId, serverId } = await req.json();
+    const { content, fileUrl, conversationId, replyToId } = await req.json();
 
     if (!content && !fileUrl) {
       return NextResponse.json(
@@ -74,24 +81,60 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!conversationId) {
+      return NextResponse.json(
+        { error: "Conversation ID is required" },
+        { status: 400 }
+      );
+    }
+
     await dbConnect();
 
-    const member = await Member.findOne({ userId: user._id, serverId });
+    const conversation = await Conversation.findById(conversationId).populate(
+      "memberOne memberTwo"
+    );
+
+    if (!conversation) {
+      return NextResponse.json(
+        { error: "Conversation not found" },
+        { status: 404 }
+      );
+    }
+
+    const member =
+      conversation.memberOne.userId.toString() === user._id.toString()
+        ? conversation.memberOne
+        : conversation.memberTwo.userId.toString() === user._id.toString()
+        ? conversation.memberTwo
+        : null;
+
     if (!member) {
       return NextResponse.json({ error: "Member not found" }, { status: 403 });
     }
 
-    const message = await DirectMessage.create({
+    const messageData: any = {
       content: content || "",
       fileUrl: fileUrl || "",
       conversationId,
       memberId: member._id,
-    });
+    };
+    if (replyToId) {
+      messageData.replyToId = replyToId;
+    }
+
+    const message = await DirectMessage.create(messageData);
 
     const populatedMessage = await DirectMessage.findById(message._id)
       .populate({
         path: "memberId",
         populate: { path: "userId", model: User },
+      })
+      .populate({
+        path: "replyToId",
+        populate: {
+          path: "memberId",
+          populate: { path: "userId", model: User },
+        },
       })
       .lean();
 

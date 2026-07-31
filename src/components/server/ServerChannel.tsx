@@ -26,6 +26,7 @@ interface ServerChannelProps {
     _id: string;
     user: { name: string };
   };
+  isDefault?: boolean;
 }
 
 const iconMap = {
@@ -39,6 +40,7 @@ export function ServerChannel({
   serverId,
   role,
   currentMember,
+  isDefault,
 }: ServerChannelProps) {
   const params = useParams();
   const router = useRouter();
@@ -58,10 +60,8 @@ export function ServerChannel({
 
   const isActive = params?.channelId === channel._id;
   const isVoiceConnected = activeVoice?.id === channel._id;
-  const isGeneral = channel.name === "general";
-  const canManage =
-    !isGeneral &&
-    (role === MemberRole.ADMIN || role === MemberRole.MODERATOR);
+  const canEdit = role === MemberRole.ADMIN || role === MemberRole.MODERATOR;
+  const canDelete = !isDefault && (role === MemberRole.ADMIN || role === MemberRole.MODERATOR);
 
   useEffect(() => {
     if (isVoiceConnected && participants.length > 0) {
@@ -127,15 +127,9 @@ export function ServerChannel({
           : "text-discord-muted hover:bg-discord-hover hover:text-discord-text"
       )}
     >
-      {isGeneral ? (
-        <ActionTooltip label="General Channel" side="top">
-          <Lock className="h-4 w-4 shrink-0 text-discord-muted outline-none" />
-        </ActionTooltip>
-      ) : (
-        <ActionTooltip label={channel.type === "TEXT" ? "Text Channel" : channel.type === "AUDIO" ? "Voice Channel" : "Video Channel"} side="top">
+        <ActionTooltip label={channel.type === "TEXT" ? "Text Channel" : channel.type === "AUDIO" ? "Voice Channel" : "Video Channel"} side="top" align="start">
           <Icon className="h-4 w-4 shrink-0 outline-none" />
         </ActionTooltip>
-      )}
       <span className="truncate">{channel.name}</span>
 
       <div className="ml-auto flex items-center gap-1">
@@ -145,8 +139,8 @@ export function ServerChannel({
           </span>
         )}
         
-        {canManage && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {canEdit && (
             <ActionTooltip label="Edit" side="top">
               <div
                 role="button"
@@ -160,6 +154,8 @@ export function ServerChannel({
                 <Edit className="h-3.5 w-3.5" />
               </div>
             </ActionTooltip>
+          )}
+          {canDelete && (
             <ActionTooltip label="Delete" side="top">
               <div
                 role="button"
@@ -173,8 +169,8 @@ export function ServerChannel({
                 <Trash className="h-3.5 w-3.5" />
               </div>
             </ActionTooltip>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </Link>
       {channel.type !== ChannelType.TEXT && (isVoiceConnected || !!status?.sessionStart) && (

@@ -3,7 +3,9 @@
 
 import { useState, useEffect } from "react";
 import { UserRound, Check, X, UserPlus, Inbox, Server } from "lucide-react";
+import { getPresenceStatus } from "@/lib/presence";
 import { UserAvatar } from "@/components/user-avatar";
+import { pusherClient } from "@/lib/pusher";
 
 export default function MePage() {
   const [tab, setTab] = useState<"friends" | "pendingFriends" | "pendingServers" | "add">("friends");
@@ -12,10 +14,11 @@ export default function MePage() {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; error: boolean } | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const fetchFriends = async () => {
     try {
-      const res = await fetch("/api/friends");
+      const res = await fetch(`/api/friends?t=${Date.now()}`);
       const data = await res.json();
       setFriends(data);
     } catch (e) {
@@ -25,9 +28,21 @@ export default function MePage() {
 
   const fetchServerInvites = async () => {
     try {
-      const res = await fetch("/api/invites");
+      const res = await fetch(`/api/invites?t=${Date.now()}`);
       const data = await res.json();
       setServerInvites(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch(`/api/users/me?t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentUser(data);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -36,7 +51,27 @@ export default function MePage() {
   useEffect(() => {
     fetchFriends();
     fetchServerInvites();
+    fetchCurrentUser();
   }, []);
+
+  useEffect(() => {
+    if (!currentUser?._id) return;
+    
+    const channelKey = `user-${currentUser._id}`;
+    const channel = pusherClient.subscribe(channelKey);
+
+    const handleUpdate = () => {
+      fetchFriends();
+      fetchServerInvites();
+    };
+
+    channel.bind("user-update", handleUpdate);
+
+    return () => {
+      channel.unbind("user-update", handleUpdate);
+      // We don't unsubscribe here because UserRealtimeUpdates is also using this channel
+    };
+  }, [currentUser?._id]);
 
   const handleAddFriend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,7 +160,7 @@ export default function MePage() {
           >
             Pending Friends
             {pendingFriendsCount > 0 && (
-              <span className="bg-campfire-red text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              <span className="bg-campfire-red text-white text-xs px-2 py-0.5 rounded-full font-bold">
                 {pendingFriendsCount}
               </span>
             )}
@@ -138,7 +173,7 @@ export default function MePage() {
           >
             Server Invites
             {pendingServersCount > 0 && (
-              <span className="bg-campfire-red text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+              <span className="bg-campfire-red text-white text-xs px-2 py-0.5 rounded-full font-bold">
                 {pendingServersCount}
               </span>
             )}
@@ -162,7 +197,7 @@ export default function MePage() {
             <p className="text-sm text-discord-muted mb-4">
               You can add friends with their username.
             </p>
-            <form onSubmit={handleAddFriend} className="flex items-center bg-discord-darker rounded-md p-2">
+            <form onSubmit={handleAddFriend} className="flex items-center bg-discord-darker rounded-md p-2 transition-all focus-within:ring-1 focus-within:ring-campfire-blue">
               <input
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -201,7 +236,7 @@ export default function MePage() {
                 {accepted.map((friend) => (
                   <div key={friend._id} className="flex items-center justify-between p-3 rounded-md hover:bg-discord-dark/50 group border-t border-transparent hover:border-discord-darker transition-colors cursor-pointer">
                     <div className="flex items-center gap-x-3">
-                      <UserAvatar src={friend.otherUser.image} name={friend.otherUser.name} className="h-8 w-8" />
+                      <UserAvatar src={friend.otherUser.image} name={friend.otherUser.name} presence={getPresenceStatus(friend.otherUser, currentUser?.isSuperAdmin)} className="h-8 w-8" />
                       <span className="font-semibold text-discord-text group-hover:text-white transition-colors">{friend.otherUser.name}</span>
                     </div>
                     <button
@@ -237,7 +272,7 @@ export default function MePage() {
                     return (
                       <div key={friend._id} className="flex items-center justify-between p-3 rounded-md hover:bg-discord-dark/50 group border-t border-transparent hover:border-discord-darker transition-colors">
                         <div className="flex items-center gap-x-3">
-                          <UserAvatar src={friend.otherUser.image} name={friend.otherUser.name} className="h-8 w-8" />
+                          <UserAvatar src={friend.otherUser.image} name={friend.otherUser.name} presence={getPresenceStatus(friend.otherUser, currentUser?.isSuperAdmin)} className="h-8 w-8" />
                           <div className="flex flex-col">
                             <span className="font-semibold text-discord-text group-hover:text-white transition-colors">{friend.otherUser.name}</span>
                             <span className="text-xs text-discord-muted">Pending Request</span>

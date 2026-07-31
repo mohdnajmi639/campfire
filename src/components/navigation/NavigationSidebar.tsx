@@ -21,7 +21,7 @@ export async function NavigationSidebar() {
   const servers = await Server.find({ _id: { $in: serverIds } }).lean();
 
   return (
-    <div className="flex h-full w-[72px] flex-col items-center gap-y-2 bg-discord-darker py-3">
+    <div className="flex h-full w-[72px] flex-col items-center gap-y-2 bg-[#232428] py-3">
       {/* Home / Logo */}
       {/* Home / Logo */}
       <Link href="/me" className="group mb-1 flex">

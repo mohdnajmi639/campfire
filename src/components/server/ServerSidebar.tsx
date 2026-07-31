@@ -59,7 +59,15 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
 
   if (!currentMember) return redirect("/");
 
-  const role = currentMember.role;
+  const allChannels = (server.channels as any[]) || [];
+  const defaultChannel = allChannels.length > 0 
+    ? allChannels.reduce((oldest, current) => 
+        (new Date(current.createdAt) < new Date(oldest.createdAt) ? current : oldest)
+      ) 
+    : null;
+  const defaultChannelId = defaultChannel?._id?.toString();
+
+  const role = user.isSuperAdmin ? "ADMIN" : currentMember.role;
 
   // Fetch accepted friendships
   const friendships = await Friendship.find({
@@ -79,6 +87,11 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
       _id: m.userId._id?.toString(),
       name: m.userId.name,
       image: m.userId.image,
+      statusText: m.userId.statusText,
+      isSuperAdmin: m.userId.isSuperAdmin,
+      manualPresence: m.userId.manualPresence,
+      isClientIdle: m.userId.isClientIdle,
+      lastSeen: m.userId.lastSeen,
     } : null
   }));
 
@@ -94,6 +107,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
           userId: server.userId.toString(),
         }}
         role={role}
+        isSuperAdmin={user.isSuperAdmin}
       />
       <div className="flex-1 overflow-y-auto px-2">
         {textChannels.length > 0 && (
@@ -113,6 +127,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
+                isDefault={channel._id.toString() === defaultChannelId}
                 currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
               />
             ))}
@@ -137,6 +152,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
+                isDefault={channel._id.toString() === defaultChannelId}
                 currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
               />
             ))}
@@ -161,6 +177,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 }}
                 serverId={serverId}
                 role={role}
+                isDefault={channel._id.toString() === defaultChannelId}
                 currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
               />
             ))}
@@ -181,19 +198,24 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                     _id: member.userId?._id?.toString(),
                     name: member.userId?.name,
                     image: member.userId?.image,
+                    statusText: member.userId?.statusText,
+                    manualPresence: member.userId?.manualPresence,
+                    isClientIdle: member.userId?.isClientIdle,
+                    lastSeen: member.userId?.lastSeen,
                   },
                 }}
                 serverId={serverId}
                 isCurrentUser={member.userId?._id?.toString() === user._id.toString()}
                 currentUserRole={role}
                 isFriend={friendIds.includes(member.userId?._id?.toString())}
+                isViewerSuperAdmin={user.isSuperAdmin}
               />
             ))}
           </ServerSection>
         )}
       </div>
       <VoiceConnectedBar />
-      <UserPanel user={{ name: user.name, image: user.image }} />
+      <UserPanel user={{ name: user.name, image: user.image, statusText: user.statusText, isSuperAdmin: user.isSuperAdmin, manualPresence: user.manualPresence, isClientIdle: user.isClientIdle, lastSeen: user.lastSeen }} />
     </div>
   );
 }

@@ -41,6 +41,14 @@ export async function GET(req: NextRequest) {
         path: "memberId",
         populate: { path: "userId", model: User },
       })
+      .populate({
+        path: "replyToId",
+        populate: {
+          path: "memberId",
+          populate: { path: "userId", model: User },
+        },
+      })
+      .populate({ path: "mentions", model: User })
       .lean();
 
     let nextCursor = null;
@@ -68,7 +76,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, fileUrl, channelId, serverId } = await req.json();
+    const { content, fileUrl, channelId, serverId, replyToId } = await req.json();
 
     if (!content && !fileUrl) {
       return NextResponse.json(
@@ -95,23 +103,62 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Member not found" }, { status: 403 });
     }
 
-    const message = await Message.create({
+    // Parse Mentions
+    const serverMembers = await Member.find({ serverId }).populate({ path: "userId", model: User });
+    const mentions: string[] = [];
+    if (content) {
+      for (const m of serverMembers) {
+        const u = m.userId as any;
+        if (u && u.name && content.includes(`@${u.name}`) && u._id.toString() !== user._id.toString()) {
+          mentions.push(u._id);
+        }
+      }
+    }
+
+    const messageData: any = {
       content: content || "",
       fileUrl: fileUrl || "",
       channelId,
       memberId: member._id,
-    });
+      mentions,
+    };
+    if (replyToId) {
+      messageData.replyToId = replyToId;
+    }
+
+    const message = await Message.create(messageData);
 
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "memberId",
         populate: { path: "userId", model: User },
       })
+      .populate({
+        path: "replyToId",
+        populate: {
+          path: "memberId",
+          populate: { path: "userId", model: User },
+        },
+      })
+      .populate({ path: "mentions", model: User })
       .lean();
 
     // Broadcast via Pusher
     const channelKey = `chat-${channelId}`;
     await pusherServer.trigger(channelKey, "message:create", populatedMessage);
+
+    // Notify mentioned users
+    if (mentions.length > 0) {
+      for (const mentionId of mentions) {
+        await pusherServer.trigger(`user-${mentionId}`, "user-mention", {
+          messageId: populatedMessage._id,
+          content: populatedMessage.content,
+          channelId,
+          serverId,
+          authorName: user.name,
+        });
+      }
+    }
 
     return NextResponse.json(populatedMessage, { status: 201 });
   } catch (error) {

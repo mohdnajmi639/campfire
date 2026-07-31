@@ -10,6 +10,8 @@ import { DMItem } from "./DMItem";
 import { Search, UserRound } from "lucide-react";
 import { UserPanel } from "@/components/user-panel";
 import Link from "next/link";
+import { DMSearchButton } from "./DMSearchButton";
+import { getPresenceStatus } from "@/lib/presence";
 
 export async function DMSidebar() {
   const user = await currentUser();
@@ -61,10 +63,7 @@ export async function DMSidebar() {
     <div className="flex h-full w-full flex-col bg-discord-channel text-primary">
       {/* Search Bar Placeholder */}
       <div className="flex h-12 items-center border-b border-discord-dark/50 px-3 shadow-sm">
-        <button className="flex w-full items-center gap-x-2 rounded-sm bg-discord-darker px-2 py-1 text-sm text-discord-muted transition hover:bg-discord-darker/80">
-          <Search className="h-4 w-4" />
-          Find or start a conversation
-        </button>
+        <DMSearchButton />
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-2 no-scrollbar">
@@ -102,11 +101,13 @@ export async function DMSidebar() {
               id={conv._id.toString()}
               name={otherUser.name}
               imageUrl={otherUser.image}
+              statusText={otherUser.statusText}
+              presence={getPresenceStatus(otherUser, user.isSuperAdmin)}
             />
           );
         })}
       </div>
-      <UserPanel user={{ name: user.name, image: user.image }} />
+      <UserPanel user={{ name: user.name, image: user.image, statusText: user.statusText, isSuperAdmin: user.isSuperAdmin, manualPresence: user.manualPresence, isClientIdle: user.isClientIdle, lastSeen: user.lastSeen }} />
     </div>
   );
 }

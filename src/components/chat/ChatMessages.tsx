@@ -17,6 +17,7 @@ interface ChatMessagesProps {
   type: "channel" | "conversation";
   currentMemberId: string;
   currentMemberRole: string;
+  currentUserId?: string;
   serverId: string;
 }
 
@@ -29,6 +30,7 @@ export function ChatMessages({
   type,
   currentMemberId,
   currentMemberRole,
+  currentUserId,
   serverId,
 }: ChatMessagesProps) {
   const queryKey = `chat:${chatId}`;
@@ -43,7 +45,7 @@ export function ChatMessages({
       paramValue,
     });
 
-  useChatSocket({ channelId: chatId, queryKey });
+  useChatSocket({ channelId: chatId, queryKey, serverId });
   useChatScroll({
     chatRef,
     bottomRef,
@@ -84,7 +86,7 @@ export function ChatMessages({
       <div className="mt-auto flex flex-col-reverse">
         {data?.pages?.map((page: any, i: number) => (
           <div key={i} className="flex flex-col-reverse">
-            {page.items.map((message: any) => (
+            {page.items?.map((message: any) => (
               <ChatItem
                 key={message._id}
                 id={message._id}
@@ -95,9 +97,13 @@ export function ChatMessages({
                 deleted={message.deleted}
                 currentMemberId={currentMemberId}
                 currentMemberRole={currentMemberRole}
+                currentUserId={currentUserId}
                 isUpdated={message.createdAt !== message.updatedAt}
                 serverId={serverId}
                 channelId={chatId}
+                type={type}
+                replyTo={message.replyToId}
+                mentions={message.mentions}
               />
             ))}
           </div>

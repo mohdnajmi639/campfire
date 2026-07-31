@@ -22,13 +22,6 @@ export async function POST(req: Request) {
       );
     }
 
-    if (name === "general") {
-      return NextResponse.json(
-        { error: "Channel name cannot be 'general'" },
-        { status: 400 }
-      );
-    }
-
     await dbConnect();
 
     // Verify user is admin or moderator
@@ -38,9 +31,10 @@ export async function POST(req: Request) {
     });
 
     if (
-      !member ||
+      !user.isSuperAdmin &&
+      (!member ||
       (member.role !== MemberRole.ADMIN &&
-        member.role !== MemberRole.MODERATOR)
+        member.role !== MemberRole.MODERATOR))
     ) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }

@@ -15,7 +15,8 @@ export type ModalType =
   | "deleteMessage"
   | "userSettings"
   | "changeNickname"
-  | "imageViewer";
+  | "imageViewer"
+  | "dmSearch";
 
  
 interface ModalData {
@@ -27,6 +28,7 @@ interface ModalData {
   user?: any;
   member?: any;
   imageUrl?: string;
+  isDeleted?: boolean;
 }
 
 interface ModalStore {
