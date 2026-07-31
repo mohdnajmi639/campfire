@@ -34,6 +34,7 @@ export function UserSettingsModal() {
 
   useEffect(() => {
     if (data.user && isModalOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setImageUrl(data.user.image || "");
       setStatusText(data.user.statusText || "");
       setIsSuperAdmin(data.user.isSuperAdmin || false);

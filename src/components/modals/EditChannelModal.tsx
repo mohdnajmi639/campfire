@@ -20,6 +20,7 @@ export function EditChannelModal() {
 
   useEffect(() => {
     if (data?.channel) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(data.channel.name);
       setChannelType(data.channel.type as ChannelType);
     }

@@ -39,8 +39,11 @@ export function DMSearchModal() {
 
   useEffect(() => {
     if (!isModalOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUsers([]);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMessages([]);
       return;
     }
@@ -110,7 +113,7 @@ export function DMSearchModal() {
 
           {query && !isLoading && users.length === 0 && messages.length === 0 && (
             <div className="py-12 text-center text-sm text-discord-muted">
-              No results found for "{query}".
+              No results found for &quot;{query}&quot;.
             </div>
           )}
 

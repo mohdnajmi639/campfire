@@ -1,29 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 const IDLE_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 const HEARTBEAT_INTERVAL = 10 * 1000; // 10 seconds
 
 export function PresenceProvider({ children }: { children: React.ReactNode }) {
   const [isIdle, setIsIdle] = useState(false);
-  const lastActivityRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const updateActivity = () => {
+  useEffect(() => {
     lastActivityRef.current = Date.now();
-    if (isIdle) {
-      setIsIdle(false);
-      sendHeartbeat(false);
-    }
-  };
+  }, []);
 
-  const sendHeartbeat = async (idleStatus: boolean, isOffline: boolean = false) => {
+  const sendHeartbeat = useCallback(async (idleStatus: boolean, isOffline: boolean = false) => {
     try {
       const payload = JSON.stringify({ isIdle: idleStatus, isOffline });
       
       if (isOffline && navigator.sendBeacon) {
-        // More reliable for tab close
         const blob = new Blob([payload], { type: 'application/json' });
         navigator.sendBeacon("/api/presence", blob);
       } else {
@@ -37,7 +32,15 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error("Failed to send presence heartbeat", error);
     }
-  };
+  }, []);
+
+  const updateActivity = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    if (isIdle) {
+      setIsIdle(false);
+      sendHeartbeat(false);
+    }
+  }, [isIdle, sendHeartbeat]);
 
   useEffect(() => {
     const events = ["mousemove", "mousedown", "keydown", "scroll", "touchstart"];
@@ -70,7 +73,7 @@ export function PresenceProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("pagehide", handleBeforeUnload);
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isIdle]);
+  }, [isIdle, updateActivity, sendHeartbeat]);
 
   return <>{children}</>;
 }

@@ -21,6 +21,7 @@ export function RightSidebar({
   // To avoid hydration mismatch if needed, though this is purely client-side
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -71,7 +72,7 @@ export function RightSidebar({
           <div className="flex flex-col items-center justify-center text-center h-32 text-discord-muted space-y-2">
               <>
                 <Search className="h-8 w-8 opacity-50" />
-                <p className="text-sm">No results found for "{searchQuery}".</p>
+                <p className="text-sm">No results found for &quot;{searchQuery}&quot;.</p>
               </>
           </div>
         )}

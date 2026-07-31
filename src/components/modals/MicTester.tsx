@@ -26,6 +26,7 @@ export function MicTester() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVolume(0);
       return;
     }
@@ -116,7 +117,7 @@ export function MicTester() {
       </div>
       
       <p className="text-xs text-discord-muted leading-relaxed">
-        Let's make sure your mic is working correctly. Click the button above to test.
+        Let&apos;s make sure your mic is working correctly. Click the button above to test.
       </p>
 
       <div className="relative h-6 w-full rounded-md bg-black/40 overflow-hidden border border-discord-dark">

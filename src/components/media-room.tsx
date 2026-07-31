@@ -208,10 +208,11 @@ function CustomParticipantTile(props: any) {
     return () => document.removeEventListener("click", handleClickOutside);
   }, [contextMenu]);
 
+  const localIsSpeaking = useVoiceStore((s) => s.isSpeaking);
+
   if (!trackRef) return <ParticipantTile {...props} />;
 
   const participant = trackRef.participant;
-  const localIsSpeaking = useVoiceStore((s) => s.isSpeaking);
   const isSpeaking = participant?.isLocal ? localIsSpeaking : participant?.isSpeaking;
   const volume = userVolumes[participant.identity] ?? 1;
   
@@ -330,7 +331,7 @@ function MediaStateSync() {
       }
       prevMicRef.current = mic.enabled;
     }
-  }, [mic.enabled, cam.enabled, screen.enabled, setMediaState, playSound]);
+  }, [mic.enabled, cam.enabled, screen.enabled, setMediaState, playSound, voiceMode]);
 
   useEffect(() => {
     if (mediaAction) {
@@ -361,7 +362,7 @@ function VoiceKeybindListener() {
     if (voiceMode === "ptt" && mic.enabled) {
       mic.toggle();
     }
-  }, [voiceMode]); // only run when voiceMode changes or mounts
+  }, [voiceMode, mic]); // only run when voiceMode changes or mounts
 
   useEffect(() => {
     if (voiceMode === "activity") return;
@@ -408,7 +409,7 @@ function VoiceKeybindListener() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [voiceMode, pttKeybind, mic.enabled]);
+  }, [voiceMode, pttKeybind, mic.enabled, mic]);
 
   return null;
 }
@@ -467,7 +468,7 @@ function VoiceTracker() {
     } else {
       document.body.classList.remove("is-speaking-fast");
     }
-  }, [volume, setSpeaking]);
+  }, [volume, setSpeaking, micThreshold]);
 
   return null;
 }
