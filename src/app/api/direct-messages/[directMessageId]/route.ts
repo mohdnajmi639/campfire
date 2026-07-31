@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db";
 import DirectMessage from "@/models/DirectMessage";
 import Conversation from "@/models/Conversation";
 import User from "@/models/User";
+import Member from "@/models/Member";
 import { pusherServer } from "@/lib/pusher";
 
 export async function PATCH(
