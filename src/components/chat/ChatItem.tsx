@@ -36,6 +36,7 @@ interface ChatItemProps {
   replyTo?: any;
   mentions?: any[];
   currentUserId?: string;
+  actionTooltipSide?: "top" | "right" | "bottom" | "left";
 }
 
 const roleIconMap: Record<string, React.ReactNode> = {
@@ -62,6 +63,7 @@ export function ChatItem({
   replyTo,
   mentions = [],
   currentUserId,
+  actionTooltipSide = "top",
 }: ChatItemProps) {
   const { onOpen } = useModal();
   const { setReply } = useReplyStore();
@@ -80,6 +82,7 @@ export function ChatItem({
   // Only owners can delete in DMs. In channels, admins and mods can delete.
   const canDelete = isOwner || (type === "channel" && (isAdmin || isModerator));
   const canEdit = !deleted && isOwner && !fileUrl;
+
 
   const handleEdit = async () => {
     if (!editContent.trim() || editContent === content) {
@@ -107,6 +110,7 @@ export function ChatItem({
       setIsLoading(false);
     }
   };
+
 
   const openDeleteModal = () => {
     const apiUrl = type === "channel" ? `/api/messages/${id}` : `/api/direct-messages/${id}`;
@@ -303,7 +307,7 @@ export function ChatItem({
         {/* Action buttons */}
         <div className="absolute -top-2 right-4 hidden items-center gap-1 rounded-md border border-discord-active bg-discord-channel p-0.5 shadow-sm group-hover:flex animate-fade-in z-20">
           {!deleted && (
-            <ActionTooltip label="Reply" side="top">
+            <ActionTooltip label="Reply" side={actionTooltipSide}>
               <button
                 onClick={() => setReply({ messageId: id, memberId: member._id, name: member.nickname || member.userId?.name || "Unknown" })}
                 className="p-1 text-discord-muted hover:text-discord-text transition-colors"
@@ -312,8 +316,11 @@ export function ChatItem({
               </button>
             </ActionTooltip>
           )}
+
+
+
           {canEdit && (
-            <ActionTooltip label="Edit" side="top">
+            <ActionTooltip label="Edit" side={actionTooltipSide}>
               <button
                 onClick={() => {
                   setEditContent(content);
@@ -326,7 +333,7 @@ export function ChatItem({
             </ActionTooltip>
           )}
           {canDelete && (
-            <ActionTooltip label="Delete" side="top">
+            <ActionTooltip label="Delete" side={actionTooltipSide}>
               <button
                 onClick={openDeleteModal}
                 className="p-1 text-discord-muted hover:text-discord-red transition-colors"

@@ -104,6 +104,7 @@ export function ChatMessages({
                 type={type}
                 replyTo={message.replyToId}
                 mentions={message.mentions}
+                pinned={message.pinned}
               />
             ))}
           </div>

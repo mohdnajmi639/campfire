@@ -7,6 +7,7 @@ import User from "@/models/User";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessages } from "@/components/chat/ChatMessages";
+import { RightSidebar } from "@/components/chat/RightSidebar";
 
 export default async function DMPage({
   params,
@@ -55,28 +56,36 @@ export default async function DMPage({
   const serverId = currentMember.serverId.toString();
 
   return (
-    <div className="flex h-full flex-col bg-discord-chat">
-      <ChatHeader
-        name={otherUser.name}
-        type="conversation"
-        imageUrl={otherUser.image}
-      />
-      <ChatMessages
-        name={otherUser.name}
-        chatId={conversationId}
-        apiUrl="/api/direct-messages"
-        paramKey="conversationId"
-        paramValue={conversationId}
-        type="conversation"
+    <div className="flex h-full w-full bg-discord-chat overflow-hidden">
+      <div className="flex h-full flex-col flex-1 min-w-0">
+        <ChatHeader
+          name={otherUser.name}
+          type="conversation"
+          imageUrl={otherUser.image}
+          conversationId={conversationId}
+        />
+        <ChatMessages
+          name={otherUser.name}
+          chatId={conversationId}
+          apiUrl="/api/direct-messages"
+          paramKey="conversationId"
+          paramValue={conversationId}
+          type="conversation"
+          currentMemberId={currentMember._id.toString()}
+          currentMemberRole={currentMember.role}
+          serverId={serverId}
+        />
+        <ChatInput
+          apiUrl="/api/direct-messages"
+          query={{ conversationId, serverId }}
+          name={otherUser.name}
+          type="conversation"
+        />
+      </div>
+      <RightSidebar
         currentMemberId={currentMember._id.toString()}
         currentMemberRole={currentMember.role}
-        serverId={serverId}
-      />
-      <ChatInput
-        apiUrl="/api/direct-messages"
-        query={{ conversationId, serverId }}
-        name={otherUser.name}
-        type="conversation"
+        currentUserId={user._id.toString()}
       />
     </div>
   );

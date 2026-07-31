@@ -8,6 +8,7 @@ import { ChatHeader } from "@/components/chat/ChatHeader";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { VoiceChannelTrigger } from "@/components/voice-channel-trigger";
+import { RightSidebar } from "@/components/chat/RightSidebar";
 
 export default async function ChannelPage({
   params,
@@ -31,56 +32,66 @@ export default async function ChannelPage({
   if (!member) return redirect("/");
 
   return (
-    <div className="flex h-full flex-col bg-discord-chat">
-      <ChatHeader
-        name={channel.name}
-        type="channel"
-        channelType={channel.type}
-        serverId={serverId}
-      />
-
-      {channel.type === ChannelType.TEXT && (
-        <>
-          <ChatMessages
-            name={channel.name}
-            chatId={channelId}
-            apiUrl="/api/messages"
-            paramKey="channelId"
-            paramValue={channelId}
-            type="channel"
-            currentMemberId={member._id.toString()}
-            currentMemberRole={user.isSuperAdmin ? "ADMIN" : member.role}
-            currentUserId={user._id.toString()}
-            serverId={serverId}
-          />
-          <ChatInput
-            apiUrl="/api/messages"
-            query={{ channelId, serverId }}
-            name={channel.name}
-            type="channel"
-          />
-        </>
-      )}
-
-      {channel.type === ChannelType.AUDIO && (
-        <VoiceChannelTrigger
-          channel={{
-            id: channelId,
-            name: channel.name,
-            serverId,
-            video: false,
-          }}
+    <div className="flex h-full w-full bg-discord-chat overflow-hidden">
+      <div className="flex h-full flex-col flex-1 min-w-0">
+        <ChatHeader
+          name={channel.name}
+          type="channel"
+          channelType={channel.type}
+          serverId={serverId}
+          channelId={channelId}
         />
-      )}
 
-      {channel.type === ChannelType.VIDEO && (
-        <VoiceChannelTrigger
-          channel={{
-            id: channelId,
-            name: channel.name,
-            serverId,
-            video: true,
-          }}
+        {channel.type === ChannelType.TEXT && (
+          <>
+            <ChatMessages
+              name={channel.name}
+              chatId={channelId}
+              apiUrl="/api/messages"
+              paramKey="channelId"
+              paramValue={channelId}
+              type="channel"
+              currentMemberId={member._id.toString()}
+              currentMemberRole={user.isSuperAdmin ? "ADMIN" : member.role}
+              currentUserId={user._id.toString()}
+              serverId={serverId}
+            />
+            <ChatInput
+              apiUrl="/api/messages"
+              query={{ channelId, serverId }}
+              name={channel.name}
+              type="channel"
+            />
+          </>
+        )}
+
+        {channel.type === ChannelType.AUDIO && (
+          <VoiceChannelTrigger
+            channel={{
+              id: channelId,
+              name: channel.name,
+              serverId,
+              video: false,
+            }}
+          />
+        )}
+
+        {channel.type === ChannelType.VIDEO && (
+          <VoiceChannelTrigger
+            channel={{
+              id: channelId,
+              name: channel.name,
+              serverId,
+              video: true,
+            }}
+          />
+        )}
+      </div>
+      {channel.type === ChannelType.TEXT && (
+        <RightSidebar
+          currentMemberId={member._id.toString()}
+          currentMemberRole={user.isSuperAdmin ? "ADMIN" : member.role}
+          currentUserId={user._id.toString()}
         />
       )}
     </div>

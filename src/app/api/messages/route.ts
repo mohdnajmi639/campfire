@@ -139,7 +139,8 @@ export async function POST(req: Request) {
       // Add the replied user to mentions if not already there
       const repliedMessage = await Message.findById(replyToId).populate("memberId");
       if (repliedMessage && repliedMessage.memberId) {
-        const repliedUserId = repliedMessage.memberId.userId.toString();
+        const repliedMember = repliedMessage.memberId as any;
+        const repliedUserId = repliedMember.userId.toString();
         if (repliedUserId !== user._id.toString() && !mentions.includes(repliedUserId)) {
           mentions.push(repliedUserId);
         }

@@ -117,7 +117,7 @@ export function ChatInput({ apiUrl, query, name, type }: ChatInputProps) {
   return (
     <div className="px-4 pb-6 pt-1">
       {reply && (
-        <div className="flex items-center justify-between bg-discord-darker text-discord-muted px-4 py-2 text-sm rounded-t-lg border-b border-discord-dark">
+        <div className="flex items-center justify-between bg-discord-channel text-discord-muted px-4 py-2 text-sm rounded-t-lg border-b border-discord-dark">
           <div className="flex items-center gap-x-2">
             <span>Replying to <span className="font-semibold text-discord-text">@{reply.name}</span></span>
           </div>

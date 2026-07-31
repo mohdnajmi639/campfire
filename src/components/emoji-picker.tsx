@@ -45,7 +45,6 @@ export const EmojiPicker = ({ onChange }: EmojiPickerProps) => {
               setIsOpen(false);
             }}
             theme="dark"
-            set="twitter"
           />
         </div>
       )}

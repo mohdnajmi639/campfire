@@ -17,6 +17,8 @@ import { ImageViewerModal } from "@/components/modals/ImageViewerModal";
 import { EditChannelModal } from "@/components/modals/EditChannelModal";
 import { DMSearchModal } from "@/components/modals/DMSearchModal";
 
+
+
 export function ModalProvider() {
   const [isMounted, setIsMounted] = useState(false);
 
@@ -40,6 +42,7 @@ export function ModalProvider() {
       <MembersModal />
       <MessageFileModal />
       <DeleteMessageModal />
+
       <UserSettingsModal />
       <ChangeNicknameModal />
       <ImageViewerModal />

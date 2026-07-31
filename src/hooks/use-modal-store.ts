@@ -13,6 +13,7 @@ export type ModalType =
   | "deleteChannel"
   | "messageFile"
   | "deleteMessage"
+
   | "userSettings"
   | "changeNickname"
   | "imageViewer"
@@ -29,6 +30,7 @@ interface ModalData {
   member?: any;
   imageUrl?: string;
   isDeleted?: boolean;
+  chatId?: string;
 }
 
 interface ModalStore {

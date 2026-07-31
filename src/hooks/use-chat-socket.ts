@@ -54,6 +54,8 @@ export function useChatSocket({ channelId, queryKey, serverId }: UseChatSocketPr
 
         return { ...old, pages: newPages };
       });
+
+      queryClient.invalidateQueries({ queryKey: ["search", channelId] });
     };
 
     const handleDeleteMessage = (messageId: string) => {
@@ -67,6 +69,8 @@ export function useChatSocket({ channelId, queryKey, serverId }: UseChatSocketPr
 
         return { ...old, pages: newPages };
       });
+
+      queryClient.invalidateQueries({ queryKey: ["search", channelId] });
     };
 
     const handleMemberUpdate = (member: any) => {
