@@ -56,6 +56,17 @@ export async function GET(req: NextRequest) {
       nextCursor = messages[MESSAGES_BATCH - 1]._id.toString();
     }
 
+    if (!cursor) {
+      // User is loading the channel (reading the latest messages)
+      const updateResult = await Member.updateOne(
+        { userId: user._id, "unreadMentions.channelId": channelId },
+        { $set: { "unreadMentions.$.count": 0 } }
+      );
+      if (updateResult.modifiedCount > 0) {
+        await pusherServer.trigger(`user-${user._id.toString()}`, "user-update", {});
+      }
+    }
+
     return NextResponse.json({
       items: messages,
       nextCursor,
@@ -124,6 +135,15 @@ export async function POST(req: Request) {
     };
     if (replyToId) {
       messageData.replyToId = replyToId;
+      
+      // Add the replied user to mentions if not already there
+      const repliedMessage = await Message.findById(replyToId).populate("memberId");
+      if (repliedMessage && repliedMessage.memberId) {
+        const repliedUserId = repliedMessage.memberId.userId.toString();
+        if (repliedUserId !== user._id.toString() && !mentions.includes(repliedUserId)) {
+          mentions.push(repliedUserId);
+        }
+      }
     }
 
     const message = await Message.create(messageData);
@@ -143,6 +163,10 @@ export async function POST(req: Request) {
       .populate({ path: "mentions", model: User })
       .lean();
 
+    if (!populatedMessage) {
+      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+    }
+
     // Broadcast via Pusher
     const channelKey = `chat-${channelId}`;
     await pusherServer.trigger(channelKey, "message:create", populatedMessage);
@@ -150,13 +174,37 @@ export async function POST(req: Request) {
     // Notify mentioned users
     if (mentions.length > 0) {
       for (const mentionId of mentions) {
+        // Try to increment existing channelId entry
+        const updateResult = await Member.updateOne(
+          { serverId, userId: mentionId, "unreadMentions.channelId": channelId },
+          { $inc: { "unreadMentions.$.count": 1 } }
+        );
+
+        // If no document was updated (channelId not in array), push a new entry
+        if (updateResult.modifiedCount === 0) {
+          await Member.updateOne(
+            { serverId, userId: mentionId },
+            { $push: { unreadMentions: { channelId, count: 1 } } }
+          );
+        }
+
+        // Check if this mention is actually a reply to this specific user
+        const isReply = replyToId && 
+          populatedMessage.replyToId && 
+          (populatedMessage.replyToId as any).memberId?.userId?._id?.toString() === mentionId.toString();
+
+        // Trigger user-mention for the toast
         await pusherServer.trigger(`user-${mentionId}`, "user-mention", {
           messageId: populatedMessage._id,
           content: populatedMessage.content,
           channelId,
           serverId,
           authorName: user.name,
+          isReply,
         });
+
+        // Trigger user-update to refresh the sidebars
+        await pusherServer.trigger(`user-${mentionId}`, "user-update", {});
       }
     }
 

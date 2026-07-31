@@ -114,7 +114,7 @@ export function ChatItem({
       ? { serverId, channelId } 
       : { conversationId: channelId };
       
-    onOpen("deleteMessage", { apiUrl, query, isDeleted: deleted });
+    onOpen("deleteMessage", { apiUrl, query: query as any as Record<string, string>, isDeleted: deleted });
   };
 
   const scrollToReply = () => {
@@ -167,8 +167,8 @@ export function ChatItem({
 
   return (
     <div id={`message-${id}`} className={cn(
-      "group relative flex flex-col px-4 py-1.5 chat-item-hover transition-colors duration-500",
-      isMentioned && "bg-yellow-500/10 border-l-4 border-yellow-500 hover:bg-yellow-500/20"
+      "group relative flex flex-col px-4 py-2.5 chat-item-hover transition-colors duration-500",
+      isMentioned && "bg-[#F0B132]/5 border-l-[3px] border-[#F0B132]/70 hover:bg-[#F0B132]/10"
     )}>
       {replyTo && (
         <div 
@@ -178,12 +178,10 @@ export function ChatItem({
           {/* The curved reply line */}
           <div className="absolute left-[21px] top-1/2 -mt-[1px] w-[20px] h-[14px] border-l-2 border-t-2 border-discord-muted/50 rounded-tl-md group-hover/reply:border-discord-text/50 transition-colors" />
           
-          <Image 
-            src={replyTo.memberId?.userId?.image || "/user.png"} 
-            alt="Reply" 
-            width={16} 
-            height={16} 
-            className="rounded-full relative z-10"
+          <UserAvatar 
+            src={replyTo.memberId?.userId?.image} 
+            name={replyTo.memberId?.nickname || replyTo.memberId?.userId?.name || "Unknown"}
+            className="h-4 w-4 relative z-10"
           />
           <span className="font-semibold text-discord-text text-xs hover:underline">
             {replyTo.memberId?.nickname || replyTo.memberId?.userId?.name || "Unknown User"}

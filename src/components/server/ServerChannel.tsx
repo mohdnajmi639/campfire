@@ -27,6 +27,7 @@ interface ServerChannelProps {
     user: { name: string };
   };
   isDefault?: boolean;
+  mentionCount?: number;
 }
 
 const iconMap = {
@@ -41,6 +42,7 @@ export function ServerChannel({
   role,
   currentMember,
   isDefault,
+  mentionCount = 0,
 }: ServerChannelProps) {
   const params = useParams();
   const router = useRouter();
@@ -131,6 +133,12 @@ export function ServerChannel({
           <Icon className="h-4 w-4 shrink-0 outline-none" />
         </ActionTooltip>
       <span className="truncate">{channel.name}</span>
+
+      {mentionCount > 0 && (
+        <div className="ml-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-discord-red px-1 text-[10px] font-bold leading-none text-white shadow-sm">
+          {mentionCount}
+        </div>
+      )}
 
       <div className="ml-auto flex items-center gap-1">
         {(isVoiceConnected || !!status?.sessionStart) && sessionTime && (

@@ -102,10 +102,10 @@ export async function POST(req: Request) {
     }
 
     const member =
-      conversation.memberOne.userId.toString() === user._id.toString()
-        ? conversation.memberOne
-        : conversation.memberTwo.userId.toString() === user._id.toString()
-        ? conversation.memberTwo
+      (conversation.memberOneId as any).userId.toString() === user._id.toString()
+        ? conversation.memberOneId
+        : (conversation.memberTwoId as any).userId.toString() === user._id.toString()
+        ? conversation.memberTwoId
         : null;
 
     if (!member) {

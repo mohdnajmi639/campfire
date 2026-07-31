@@ -36,14 +36,25 @@ export async function NavigationSidebar() {
       {/* Server List */}
       <div className="flex-1 w-full overflow-y-auto no-scrollbar">
         <div className="flex flex-col items-center gap-y-2">
-          {servers.map((server) => (
-            <NavigationItem
-              key={server._id.toString()}
-              id={server._id.toString()}
-              name={server.name}
-              imageUrl={server.imageUrl}
-            />
-          ))}
+          {servers.map((server) => {
+            const memberRecord = memberRecords.find((m) => m.serverId.toString() === server._id.toString());
+            let mentionCount = 0;
+            if (memberRecord?.unreadMentions) {
+              memberRecord.unreadMentions.forEach((um: any) => {
+                mentionCount += (um.count || 0);
+              });
+            }
+
+            return (
+              <NavigationItem
+                key={server._id.toString()}
+                id={server._id.toString()}
+                name={server.name}
+                imageUrl={server.imageUrl}
+                mentionCount={mentionCount}
+              />
+            );
+          })}
         </div>
       </div>
 

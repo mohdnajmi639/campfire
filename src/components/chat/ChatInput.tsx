@@ -5,6 +5,7 @@ import { Plus, SendHorizonal, X } from "lucide-react";
 import { useModal } from "@/hooks/use-modal-store";
 import { useReplyStore } from "@/hooks/use-reply-store";
 import { useMemberStore } from "@/hooks/use-member-store";
+import { EmojiPicker } from "@/components/emoji-picker";
 
 interface ChatInputProps {
   apiUrl: string;
@@ -170,6 +171,9 @@ export function ChatInput({ apiUrl, query, name, type }: ChatInputProps) {
               </ul>
             </div>
           )}
+          <div className="mr-2">
+            <EmojiPicker onChange={(emoji) => setContent((c) => c + emoji)} />
+          </div>
           <button
             type="submit"
             disabled={isLoading || !content.trim()}

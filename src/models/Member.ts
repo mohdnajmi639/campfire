@@ -8,6 +8,10 @@ export interface IMember extends Document {
   nickname?: string;
   userId: Types.ObjectId;
   serverId: Types.ObjectId;
+  unreadMentions: {
+    channelId: Types.ObjectId;
+    count: number;
+  }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +26,15 @@ const MemberSchema = new Schema<IMember>(
     nickname: { type: String },
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
     serverId: { type: Schema.Types.ObjectId, ref: "Server", required: true },
+    unreadMentions: {
+      type: [
+        {
+          channelId: { type: Schema.Types.ObjectId, ref: "Channel", required: true },
+          count: { type: Number, default: 0 },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

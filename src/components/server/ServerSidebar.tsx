@@ -69,6 +69,15 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
 
   const role = user.isSuperAdmin ? "ADMIN" : currentMember.role;
 
+  const unreadMentionsMap = new Map<string, number>();
+  if (currentMember?.unreadMentions) {
+    currentMember.unreadMentions.forEach((um: any) => {
+      if (um.count > 0) {
+        unreadMentionsMap.set(um.channelId.toString(), um.count);
+      }
+    });
+  }
+
   // Fetch accepted friendships
   const friendships = await Friendship.find({
     $or: [{ user1: user._id }, { user2: user._id }],
@@ -129,6 +138,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 role={role}
                 isDefault={channel._id.toString() === defaultChannelId}
                 currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
+                mentionCount={unreadMentionsMap.get(channel._id.toString()) || 0}
               />
             ))}
           </ServerSection>
@@ -154,6 +164,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 role={role}
                 isDefault={channel._id.toString() === defaultChannelId}
                 currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
+                mentionCount={unreadMentionsMap.get(channel._id.toString()) || 0}
               />
             ))}
           </ServerSection>
@@ -179,6 +190,7 @@ export async function ServerSidebar({ serverId }: ServerSidebarProps) {
                 role={role}
                 isDefault={channel._id.toString() === defaultChannelId}
                 currentMember={currentMember ? { _id: currentMember._id.toString(), user: { name: currentMember.userId?.name } } : undefined}
+                mentionCount={unreadMentionsMap.get(channel._id.toString()) || 0}
               />
             ))}
           </ServerSection>

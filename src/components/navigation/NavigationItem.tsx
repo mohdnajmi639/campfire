@@ -10,9 +10,10 @@ interface NavigationItemProps {
   id: string;
   name: string;
   imageUrl: string;
+  mentionCount?: number;
 }
 
-export function NavigationItem({ id, name, imageUrl }: NavigationItemProps) {
+export function NavigationItem({ id, name, imageUrl, mentionCount = 0 }: NavigationItemProps) {
   const params = useParams();
 
   const isActive = params?.serverId === id;
@@ -22,7 +23,7 @@ export function NavigationItem({ id, name, imageUrl }: NavigationItemProps) {
       <Link
         href={`/servers/${id}`}
         prefetch={true}
-        className="group relative flex items-center"
+        className="group relative flex items-center justify-center"
       >
         {/* Active pill indicator */}
         <div
@@ -32,26 +33,35 @@ export function NavigationItem({ id, name, imageUrl }: NavigationItemProps) {
           )}
         />
 
-        {/* Server icon */}
-        <div
-          className={cn(
-            "mx-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-[24px] transition-all duration-200 group-hover:rounded-[16px]",
-            isActive && "rounded-[16px] bg-campfire-orange/10",
-            !imageUrl && "bg-discord-channel"
-          )}
-        >
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={name}
-              width={48}
-              height={48}
-              className="object-cover"
-            />
-          ) : (
-            <span className="text-sm font-semibold text-discord-text">
-              {name.slice(0, 2).toUpperCase()}
-            </span>
+        {/* Server icon container */}
+        <div className="relative mx-3">
+          <div
+            className={cn(
+              "flex h-12 w-12 items-center justify-center overflow-hidden rounded-[24px] transition-all duration-200 group-hover:rounded-[16px]",
+              isActive && "rounded-[16px] bg-campfire-orange/10",
+              !imageUrl && "bg-discord-channel"
+            )}
+          >
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={name}
+                width={48}
+                height={48}
+                className="object-cover"
+              />
+            ) : (
+              <span className="text-sm font-semibold text-discord-text">
+                {name.slice(0, 2).toUpperCase()}
+              </span>
+            )}
+          </div>
+
+          {/* Mention Badge */}
+          {mentionCount > 0 && (
+            <div className="absolute -bottom-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full border-[3px] border-[#232428] bg-discord-red px-1 text-[11px] font-bold leading-none text-white shadow-sm z-10">
+              {mentionCount}
+            </div>
           )}
         </div>
       </Link>

@@ -32,6 +32,7 @@ export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
   const params = useParams();
   const { playSound } = useAudioIndicator();
   const disconnectVoice = useVoiceStore((s) => s.disconnectVoice);
+  const echoCancellation = useSettingsStore((s) => s.echoCancellation);
 
   useEffect(() => {
     if (!session?.user?.name) return;
@@ -68,7 +69,7 @@ export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
       token={token}
       connect={true}
       video={video}
-      audio={audio}
+      audio={audio ? { echoCancellation, noiseSuppression: true, autoGainControl: true } : false}
       className="flex-1"
       onMediaDeviceFailure={(e) => {
         console.warn("Media device failure (ignored to prevent Next.js crash):", e);
@@ -88,6 +89,7 @@ export function MediaRoom({ chatId, video, audio }: MediaRoomProps) {
       <VoiceTracker />
       <VoiceParticipantTracker />
       <MediaStateSync />
+      <VoiceKeybindListener />
       <VolumeSync />
     </LiveKitRoom>
   );
@@ -126,6 +128,8 @@ function CustomVideoConference() {
     }
   };
 
+  const voiceMode = useSettingsStore((s) => s.voiceMode);
+
   return (
     <div className="flex flex-col h-full relative bg-discord-chat">
       <div className="flex-1 overflow-hidden p-2 flex gap-2 pb-16">
@@ -156,7 +160,7 @@ function CustomVideoConference() {
       </div>
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-50 w-full flex justify-center pointer-events-none">
         <div className="pointer-events-auto">
-          <ControlBar controls={{ camera: true, microphone: true, screenShare: true, leave: true }} />
+          <ControlBar controls={{ camera: true, microphone: voiceMode !== "ptt", screenShare: true, leave: true }} />
         </div>
       </div>
       <RoomAudioRenderer />
@@ -192,6 +196,7 @@ function CustomParticipantTile(props: any) {
   const userVolumes = useVoiceStore((s) => s.userVolumes);
   const setUserVolume = useVoiceStore((s) => s.setUserVolume);
   const membersStore = useMemberStore((state) => state.members);
+  const voiceMode = useSettingsStore((s) => s.voiceMode);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -264,7 +269,7 @@ function CustomParticipantTile(props: any) {
 
       {/* Always render custom name tag for consistency (hiding LiveKit's default via CSS) */}
       <div className="absolute bottom-2 left-2 flex items-center gap-1.5 rounded-md bg-black/60 px-2 py-1 text-sm font-semibold text-white pointer-events-none z-10">
-        {!participant.isMicrophoneEnabled && (
+        {(!participant.isMicrophoneEnabled && !(participant.isLocal && voiceMode === 'ptt')) && (
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500"><line x1="2" y1="2" x2="22" y2="22"></line><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"></path><path d="M5 10v2a7 7 0 0 0 12 5l-1.5-1.5a5 5 0 0 1-9-3.5v-2"></path><path d="M9.86 4.14A3 3 0 0 1 15 7v4.86l-5-5Z"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
         )}
         <span className="max-w-[150px] truncate">{displayName}</span>
@@ -304,13 +309,14 @@ function MediaStateSync() {
   const mediaAction = useVoiceStore((s) => s.mediaAction);
   const clearMediaAction = useVoiceStore((s) => s.clearMediaAction);
   const { playSound } = useAudioIndicator();
+  const voiceMode = useSettingsStore((s) => s.voiceMode);
   
   // Track previous mic state to play mute/unmute sounds
   const prevMicRef = useRef(mic.enabled);
 
   useEffect(() => {
     setMediaState({
-      isMicMuted: !mic.enabled,
+      isMicMuted: voiceMode === "ptt" ? false : !mic.enabled,
       isCameraOn: cam.enabled,
       isScreenSharing: screen.enabled,
     });
@@ -344,11 +350,75 @@ function MediaStateSync() {
   return null;
 }
 
+function VoiceKeybindListener() {
+  const voiceMode = useSettingsStore((s) => s.voiceMode);
+  const pttKeybind = useSettingsStore((s) => s.pttKeybind);
+  const mic = useTrackToggle({ source: Track.Source.Microphone });
+  const isKeyPressedRef = useRef(false);
+
+  // Initialize PTT state (always start muted if PTT)
+  useEffect(() => {
+    if (voiceMode === "ptt" && mic.enabled) {
+      mic.toggle();
+    }
+  }, [voiceMode]); // only run when voiceMode changes or mounts
+
+  useEffect(() => {
+    if (voiceMode === "activity") return;
+    if (!pttKeybind) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input/textarea
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA" ||
+        (document.activeElement as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      if (e.code === pttKeybind) {
+        // Prevent default action (e.g. Space scrolling)
+        e.preventDefault();
+        
+        if (!isKeyPressedRef.current) {
+          isKeyPressedRef.current = true;
+          if (voiceMode === "ptt") {
+            if (!mic.enabled) mic.toggle();
+          } else if (voiceMode === "toggle") {
+            mic.toggle();
+          }
+        }
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === pttKeybind) {
+        isKeyPressedRef.current = false;
+        if (voiceMode === "ptt") {
+          if (mic.enabled) mic.toggle();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [voiceMode, pttKeybind, mic.enabled]);
+
+  return null;
+}
+
 function VoiceParticipantTracker() {
   const participants = useParticipants();
   const setParticipants = useVoiceStore((s) => s.setParticipants);
   const membersStore = useMemberStore((state) => state.members);
   const localIsSpeaking = useVoiceStore((s) => s.isSpeaking);
+  const voiceMode = useSettingsStore((s) => s.voiceMode);
 
   useEffect(() => {
     const mapped = participants.map((p) => {
@@ -367,13 +437,13 @@ function VoiceParticipantTracker() {
         isSpeaking: p.isLocal ? localIsSpeaking : p.isSpeaking,
         avatarUrl: imageUrl,
         joinedAt: p.joinedAt?.getTime(),
-        isMicMuted: !p.isMicrophoneEnabled,
+        isMicMuted: p.isLocal && voiceMode === "ptt" ? false : !p.isMicrophoneEnabled,
         isCameraOn: p.isCameraEnabled,
         isScreenSharing: p.isScreenShareEnabled,
       };
     });
     setParticipants(mapped);
-  }, [participants, setParticipants, membersStore, localIsSpeaking]);
+  }, [participants, setParticipants, membersStore, localIsSpeaking, voiceMode]);
 
   return null;
 }
